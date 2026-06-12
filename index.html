@@ -1,0 +1,3090 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Редактор шара</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #101114;
+      --muted: #757985;
+      --line: #ececf0;
+      --panel: #fff;
+      --soft: #f7f7f8;
+      --soft-strong: #f1f1f3;
+      --accent: #15161a;
+      --accent-soft: rgba(21, 22, 26, 0.12);
+      --accent-shadow: rgba(21, 22, 26, 0.18);
+      --sphere-bg: none;
+      --sphere-bg-size: 100% 100%;
+      --sphere-bg-position: 50% 50%;
+      --sphere-shadow: none;
+      --sphere-saturation: 1.08;
+      --sphere-brightness: 1;
+      --glow-color: rgba(168, 146, 255, 0.24);
+      --glow-blur: 42px;
+      --glow-size: 86%;
+      --glow-x: 50%;
+      --glow-y: 50%;
+      --pos-a: 50% 50%;
+      --pos-b: 50% 50%;
+      --pos-c: 50% 50%;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(230, 230, 234, 0.48), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(248, 231, 239, 0.22), transparent 28%),
+        #fbfbfc;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 450px minmax(0, 1fr);
+      align-items: start;
+      gap: 16px;
+      width: min(calc(100% - 32px), 1500px);
+      margin: 0 auto;
+      padding: 16px 0;
+    }
+
+    .canvas-panel,
+    .controls-panel {
+      height: calc(100vh - 32px);
+      min-height: 820px;
+      border: 1px solid rgba(0, 0, 0, 0.035);
+      border-radius: 28px;
+      background: var(--panel);
+      overflow: hidden;
+      box-shadow: 0 18px 54px rgba(32, 34, 41, 0.07);
+    }
+
+    .canvas-panel {
+      display: grid;
+      grid-template-rows: auto 378px minmax(0, 1fr);
+    }
+
+    .controls-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 70px;
+      padding: 22px 26px 8px;
+      border-bottom: 0;
+    }
+
+    .canvas-panel .panel-head {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding-top: 18px;
+    }
+
+    .controls-panel .panel-head {
+      align-items: start;
+      min-height: 54px;
+      padding-top: 18px;
+      padding-bottom: 0;
+    }
+
+    .canvas-panel .top-actions {
+      order: -1;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .panel-head > div:first-child {
+      min-width: 0;
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.2;
+      letter-spacing: 0;
+      font-weight: 760;
+    }
+
+    h1 {
+      max-width: 380px;
+    }
+
+    h2 {
+      font-size: 20px;
+    }
+
+    .hint {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 380px;
+    }
+
+    .stage-wrap {
+      display: grid;
+      place-items: start center;
+      padding: 16px 26px 18px;
+      overflow: visible;
+      background: #fff;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 344px;
+      display: grid;
+      place-items: center;
+      border-radius: 32px;
+      background: var(--soft);
+      overflow: hidden;
+    }
+
+    .sphere-wrap {
+      position: relative;
+      width: 286px;
+      height: 286px;
+      display: grid;
+      place-items: center;
+    }
+
+    .sphere-wrap::before {
+      content: "";
+      position: absolute;
+      left: var(--glow-x);
+      top: var(--glow-y);
+      width: var(--glow-size);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, var(--glow-color) 0 24%, transparent 72%);
+      filter: blur(var(--glow-blur)) saturate(1.12);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .sphere {
+      position: relative;
+      width: 286px;
+      height: 286px;
+      border-radius: 50%;
+      background-color: var(--sphere-base, #fff);
+      background-image: var(--sphere-bg);
+      background-size: var(--sphere-bg-size);
+      background-position: var(--sphere-bg-position);
+      background-repeat: no-repeat;
+      box-shadow: var(--sphere-shadow);
+      filter: saturate(var(--sphere-saturation)) brightness(var(--sphere-brightness));
+      animation: bubble-orbit 8s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .point {
+      position: absolute;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: var(--color);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.18);
+      cursor: grab;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+
+    .point.selected {
+      box-shadow: 0 0 0 2px var(--accent), 0 4px 16px var(--accent-shadow);
+    }
+
+    .canvas-code {
+      display: grid;
+      min-height: 0;
+      margin: 10px 26px 26px;
+      padding: 16px;
+      overflow: hidden;
+      border-radius: 24px;
+      background: var(--soft);
+    }
+
+    .canvas-code-inner {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .code-head .action-btn {
+      height: 28px;
+      min-height: 28px;
+      padding: 0 12px;
+      font-size: 11px;
+    }
+
+    .css-code-view {
+      height: 100%;
+      min-height: 0;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      border-radius: 14px;
+      background: #fff;
+      color: #101114;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .css-code-line {
+      display: block;
+      min-height: 1.45em;
+      margin: 0 -6px;
+      padding: 0 6px;
+      border-radius: 5px;
+    }
+
+    .css-code-line.selected-gradient {
+      position: relative;
+      z-index: 0;
+      background: #e3e3e7;
+      box-shadow:
+        inset 0 -1px 0 rgba(16, 17, 20, 0.035),
+        0 3px 0 rgba(16, 17, 20, 0.05);
+    }
+
+    .css-output-source {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.92fr) minmax(380px, 1.08fr);
+      grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 16px;
+      padding: 8px 26px 14px;
+      min-height: 0;
+    }
+
+    .section {
+      min-width: 0;
+      margin: 0;
+      padding: 18px;
+      border-radius: 24px;
+      background: var(--soft);
+      overflow: hidden;
+    }
+
+    .controls .section:nth-child(1),
+    .controls .section:nth-child(2) {
+      height: 100%;
+    }
+
+    .controls .section:nth-child(3),
+    .controls .section:nth-child(4) {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .section:nth-child(3) {
+      grid-column: 1 / 2;
+    }
+
+    .section:nth-child(4) {
+      grid-column: 2 / 3;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .color-list {
+      display: grid;
+      grid-auto-rows: 54px;
+      align-content: start;
+      gap: 8px;
+      height: calc(100% - 34px);
+      max-height: none;
+      overflow-y: auto;
+      padding-right: 4px;
+      overscroll-behavior: contain;
+    }
+
+    .color-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .color-list::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(16, 17, 20, 0.16);
+    }
+
+    .version-list {
+      display: grid;
+      grid-auto-rows: 94px;
+      align-content: start;
+      gap: 10px;
+      margin-top: 10px;
+      height: calc(100% - 78px);
+      max-height: none;
+      overflow-y: auto;
+      padding-right: 4px;
+      overscroll-behavior: contain;
+    }
+
+    .version-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .version-list::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(16, 17, 20, 0.16);
+    }
+
+    .version-card {
+      display: grid;
+      gap: 10px;
+      height: 94px;
+      padding: 10px;
+      border: 0;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.025);
+    }
+
+    .version-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .version-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .version-name-input {
+      display: block;
+      width: 100%;
+      height: 28px;
+      padding: 0 8px;
+      margin-left: -8px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      box-shadow: none;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 750;
+      cursor: text;
+      transition: background 140ms ease, box-shadow 140ms ease;
+    }
+
+    .version-name-input:hover,
+    .version-name-input:focus {
+      outline: none;
+      background: var(--soft);
+      box-shadow: inset 0 0 0 1px rgba(16, 17, 20, 0.08);
+    }
+
+    .version-title {
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .version-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .color-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      height: 54px;
+      min-height: 54px;
+      padding: 9px 12px;
+      border: 0;
+      border-radius: 22px;
+      background: #f1f1f3;
+      color: inherit;
+      text-align: left;
+      cursor: grab;
+      font: inherit;
+      box-shadow: none;
+    }
+
+    .color-card.dragging {
+      opacity: 0.46;
+      cursor: grabbing;
+    }
+
+    .color-card.drop-before {
+      box-shadow: inset 0 2px 0 var(--accent);
+    }
+
+    .color-card.drop-after {
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+
+    .color-card.selected {
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 50%;
+      background: var(--color);
+    }
+
+    .card-title { display: block; font-size: 14px; font-weight: 750; }
+    .card-meta { display: block; color: var(--muted); font-size: 12px; }
+
+    .delete-btn {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      background: transparent;
+      color: #22242a;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .delete-btn:hover {
+      border-color: transparent;
+      background: var(--soft);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      border-radius: 18px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      box-shadow: none;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      height: 34px;
+      padding: 0 14px;
+    }
+
+    select {
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #757985 50%),
+        linear-gradient(135deg, #757985 50%, transparent 50%);
+      background-position:
+        calc(100% - 16px) 14px,
+        calc(100% - 11px) 14px;
+      background-repeat: no-repeat;
+      background-size: 5px 5px, 5px 5px;
+    }
+
+    input[type="color"] {
+      height: 40px;
+      padding: 0;
+      overflow: hidden;
+      appearance: none;
+      -webkit-appearance: none;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: 0;
+      border-radius: 16px;
+    }
+
+    input[type="color"]::-moz-color-swatch {
+      border: 0;
+      border-radius: 16px;
+    }
+
+    input[type="range"] {
+      height: 36px;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(
+        to right,
+        var(--accent) 0 var(--range-fill, 50%),
+        #e4e4e7 var(--range-fill, 50%) 100%
+      );
+      box-shadow: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      width: 22px;
+      height: 22px;
+      margin-top: -7px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 5px rgba(16, 17, 20, 0.14);
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 8px;
+      border: 0;
+      border-radius: 999px;
+      background: #e4e4e7;
+    }
+
+    input[type="range"]::-moz-range-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 5px rgba(16, 17, 20, 0.14);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      box-shadow: none;
+    }
+
+    textarea {
+      height: 220px;
+      min-height: 0;
+      padding: 14px;
+      resize: vertical;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .action-btn {
+      height: 34px;
+      min-height: 34px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 720;
+      white-space: nowrap;
+    }
+
+    .action-btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: none;
+    }
+
+    .action-btn.compact {
+      height: 30px;
+      min-height: 30px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .footer {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.92fr) minmax(380px, 1.08fr);
+      gap: 16px;
+      padding: 0 26px 22px;
+      border-top: 0;
+    }
+
+    .footer .action-btn {
+      width: 100%;
+      height: 52px;
+      min-height: 52px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      gap: 8px;
+    }
+
+    .project-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #projectFileInput {
+      display: none;
+    }
+
+    .settings-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lang-toggle {
+      min-width: 68px;
+    }
+
+    @keyframes bubble-orbit {
+      0%, 100% {
+        background-position: var(--pos-a);
+        transform: translateY(0) rotate(0deg) scale(1);
+        filter: saturate(var(--sat-a)) brightness(var(--bright-a));
+      }
+      45% {
+        background-position: var(--pos-b);
+        transform: translateY(-3px) rotate(7deg) scale(1.014);
+        filter: saturate(var(--sat-b)) brightness(var(--bright-b));
+      }
+      72% {
+        background-position: var(--pos-c);
+        transform: translateY(-1px) rotate(12deg) scale(0.998);
+        filter: saturate(var(--sat-c)) brightness(var(--bright-c));
+      }
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+        width: min(calc(100% - 24px), 760px);
+        padding: 12px 0;
+      }
+      .canvas-panel,
+      .controls-panel {
+        height: auto;
+        min-height: 0;
+      }
+      .canvas-panel {
+        grid-template-rows: auto auto 420px;
+      }
+      .controls {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+      }
+      .footer {
+        grid-template-columns: 1fr;
+      }
+      .section:nth-child(3) {
+        grid-column: auto;
+      }
+      .section:nth-child(4) {
+        grid-column: auto;
+      }
+      .controls .section:nth-child(1),
+      .controls .section:nth-child(2),
+      .controls .section:nth-child(3),
+      .controls .section:nth-child(4) {
+        height: auto;
+        min-height: 252px;
+      }
+      .canvas-panel,
+      .controls-panel {
+        border-radius: 24px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(calc(100% - 16px), 420px);
+        padding: 8px 0;
+      }
+      .panel-head {
+        align-items: flex-start;
+        padding: 18px 18px 8px;
+      }
+      .stage {
+        width: min(344px, calc(100vw - 72px));
+        height: min(344px, calc(100vw - 72px));
+      }
+      .sphere-wrap,
+      .sphere {
+        width: min(286px, calc(100vw - 112px));
+        height: min(286px, calc(100vw - 112px));
+      }
+      .controls,
+      .canvas-code {
+        margin-left: 18px;
+        margin-right: 18px;
+      }
+      .controls {
+        padding: 18px;
+      }
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="canvas-panel">
+      <div class="panel-head">
+        <div>
+          <h1 data-i18n="title">Редактор шара</h1>
+          <div class="hint" data-i18n="subtitle">Точки внутри шара экспортируются как реальные CSS radial-gradient.</div>
+        </div>
+        <div class="top-actions">
+          <button class="action-btn lang-toggle" id="langToggle" type="button">EN</button>
+          <div class="project-actions">
+            <button class="action-btn" id="loadProjectBtn" type="button" data-i18n="loadProject">Загрузить</button>
+            <button class="action-btn" id="resetBtn" type="button" data-i18n="reset">Сбросить</button>
+          </div>
+          <input id="projectFileInput" type="file" accept=".json,application/json">
+        </div>
+      </div>
+
+      <div class="stage-wrap">
+        <div class="stage" id="stage">
+          <div class="sphere-wrap" id="sphereWrap">
+            <div class="sphere" id="sphere"></div>
+          </div>
+        </div>
+      </div>
+
+      <section class="canvas-code">
+        <div class="canvas-code-inner">
+          <span class="code-head">
+            <span data-i18n="readyCss">Готовый CSS</span>
+            <button class="action-btn" id="exportProjectBtn" type="button" data-i18n="exportProject">Выгрузить</button>
+          </span>
+          <pre class="css-code-view" id="cssCodeView" aria-live="polite"></pre>
+          <textarea class="css-output-source" id="cssOutput" spellcheck="false" aria-hidden="true" tabindex="-1"></textarea>
+        </div>
+      </section>
+    </section>
+
+    <aside class="controls-panel">
+      <div class="panel-head">
+        <h2 data-i18n="settings">Настройки</h2>
+        <div class="settings-actions">
+          <button class="action-btn" id="addHighlightBtn" type="button" data-i18n="addHighlight">Добавить блик</button>
+          <button class="action-btn primary" id="addBtn" type="button" data-i18n="addPoint">Добавить точку</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <section class="section">
+          <p class="section-title" data-i18n="colorPoints">Цветовые точки</p>
+          <div class="color-list" id="colorList"></div>
+        </section>
+
+        <section class="section">
+          <p class="section-title" data-i18n="selectedPoint">Выбранная точка</p>
+          <div class="field-grid">
+            <label><span data-i18n="name">Название</span> <input id="nameInput" type="text"></label>
+            <label><span data-i18n="color">Цвет</span> <input id="colorInput" type="color"></label>
+            <label><span data-i18n="xPercent">X, %</span> <input id="xInput" type="number" min="0" max="100" step="1"></label>
+            <label><span data-i18n="yPercent">Y, %</span> <input id="yInput" type="number" min="0" max="100" step="1"></label>
+            <label><span data-i18n="opacity">Насыщенность</span> <input id="alphaInput" type="range" min="0" max="1" step="0.01"></label>
+            <label><span data-i18n="spotSize">Размер пятна, %</span> <input id="radiusInput" type="range" min="18" max="86" step="1"></label>
+            <label><span data-i18n="pointType">Тип</span>
+              <select id="shapeInput">
+                <option value="circle" data-i18n="typeSpot">Пятно</option>
+                <option value="arc" data-i18n="typeArc">Дуга</option>
+              </select>
+            </label>
+            <label><span data-i18n="spotRotation">Поворот пятна, °</span> <input id="angleInput" type="range" min="0" max="360" step="1"></label>
+            <label><span data-i18n="spotBlur">Размытие пятна, %</span> <input id="pointBlurInput" type="range" min="0" max="100" step="1"></label>
+          </div>
+        </section>
+
+        <section class="section">
+          <p class="section-title" data-i18n="glowSection">Подложка и подсветка</p>
+          <div class="field-grid">
+            <label><span data-i18n="baseColor">Цвет подложки</span> <input id="baseColorInput" type="color"></label>
+            <label><span data-i18n="baseOpacity">Прозрачность подложки</span> <input id="baseAlphaInput" type="range" min="0" max="1" step="0.01"></label>
+            <label><span data-i18n="color">Цвет</span> <input id="glowColorInput" type="color"></label>
+            <label><span data-i18n="transparency">Прозрачность</span> <input id="glowAlphaInput" type="range" min="0" max="0.8" step="0.01"></label>
+            <label><span data-i18n="blurPx">Размытие, px</span> <input id="glowBlurInput" type="range" min="0" max="90" step="1"></label>
+            <label><span data-i18n="sizePercent">Размер, %</span> <input id="glowSizeInput" type="range" min="20" max="160" step="1"></label>
+            <label><span data-i18n="xPercent">X, %</span> <input id="glowXInput" type="range" min="-20" max="120" step="1"></label>
+            <label><span data-i18n="yPercent">Y, %</span> <input id="glowYInput" type="range" min="-40" max="150" step="1"></label>
+          </div>
+        </section>
+
+        <section class="section">
+          <p class="section-title" data-i18n="versionHistory">История версий</p>
+          <button class="action-btn primary" id="saveVersionBtn" type="button" data-i18n="saveCurrent">Сохранить текущую версию</button>
+          <div class="version-list" id="versionList"></div>
+        </section>
+      </div>
+
+      <div class="footer">
+        <button class="action-btn primary" id="copyBtn" type="button" data-i18n="copyCss">Скопировать CSS</button>
+        <button class="action-btn" id="smallBtn" type="button">CSS для 66px</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const defaults = [
+      { id: "topArc", name: "Розовая дуга", nameEn: "Pink arc", x: 54, y: 9, color: "#ff91c9", alpha: 0.58, radius: 33, shape: "ellipse" },
+      { id: "blueDepth", name: "Синий объем", nameEn: "Blue depth", x: 65, y: 34, color: "#5879ff", alpha: 0.62, radius: 66, shape: "circle" },
+      { id: "mintBase", name: "Мятный низ", nameEn: "Mint base", x: 35, y: 65, color: "#d6ffef", alpha: 0.76, radius: 70, shape: "circle" },
+      { id: "whiteGlow", name: "Белый блик", nameEn: "White highlight", x: 26, y: 23, color: "#ffffff", alpha: 0.96, radius: 48, shape: "ellipse" },
+      { id: "bottomPink", name: "Нижний розовый", nameEn: "Lower pink", x: 50, y: 94, color: "#ff95db", alpha: 0.42, radius: 44, shape: "ellipse" },
+      { id: "violetEdge", name: "Правая сирень", nameEn: "Right violet", x: 88, y: 56, color: "#9b6fff", alpha: 0.34, radius: 53, shape: "circle" }
+    ];
+
+    const defaultGlow = { color: "#a892ff", alpha: 0.24, blur: 42, size: 112, x: 50, y: 50 };
+    const defaultBase = { color: "#ffffff", alpha: 0.72 };
+    const defaultOutline = { color: "#ab8fff", alpha: 0.35, blur: 18, spread: 1 };
+    const baseGradient = "radial-gradient(circle at 38% 28%, rgba(255, 255, 255, 0.82) 0 20%, rgba(255, 255, 255, 0.42) 42%, rgba(255, 255, 255, 0.18) 100%)";
+    const largeShadow = [
+      "inset 0 0 18px 2px rgba(255, 255, 255, 0.78)",
+      "inset 12px 15px 34px rgba(255, 255, 255, 0.68)",
+      "inset -18px -22px 36px rgba(0, 0, 0, 0.08)",
+      "inset 20px 4px 44px rgba(255, 255, 255, 0.28)",
+      "inset -26px 2px 46px rgba(255, 255, 255, 0.22)"
+    ];
+    const smallShadow = [
+      "inset 0 0 4px 1px rgba(255, 255, 255, 0.78)",
+      "inset 3px 3px 8px rgba(255, 255, 255, 0.68)",
+      "inset -4px -5px 8px rgba(0, 0, 0, 0.08)",
+      "inset 5px 0 10px rgba(255, 255, 255, 0.28)",
+      "inset -6px 0 10px rgba(255, 255, 255, 0.22)"
+    ];
+
+    const translations = {
+      ru: {
+        title: "Редактор шара",
+        subtitle: "Точки внутри шара экспортируются как реальные CSS radial-gradient.",
+        reset: "Сбросить",
+        settings: "Настройки",
+        addPoint: "Добавить точку",
+        addHighlight: "Добавить блик",
+        colorPoints: "Цветовые точки",
+        selectedPoint: "Выбранная точка",
+        name: "Название",
+        color: "Цвет",
+        xPercent: "X, %",
+        yPercent: "Y, %",
+        opacity: "Насыщенность",
+        spotSize: "Размер пятна, %",
+        arcSize: "Размер дуги, %",
+        pointType: "Тип",
+        typeSpot: "Пятно",
+        typeArc: "Дуга",
+        spotRotation: "Поворот пятна, °",
+        spotBlur: "Размытие пятна, %",
+        glowSection: "Подложка и подсветка",
+        baseColor: "Цвет подложки",
+        baseOpacity: "Прозрачность подложки",
+        outlineSection: "Обводка шара",
+        outlineName: "Обводка",
+        transparency: "Прозрачность",
+        blurPx: "Размытие, px",
+        thicknessPx: "Толщина, px",
+        sizePercent: "Размер, %",
+        versionHistory: "История версий",
+        saveCurrent: "Сохранить текущую версию",
+        readyCss: "Готовый CSS",
+        exportProject: "Выгрузить",
+        loadProject: "Загрузить",
+        importError: "Не удалось загрузить файл проекта.",
+        copyCss: "Скопировать CSS",
+        smallCss: "CSS для 66px",
+        largeCss: "CSS для 300px",
+        emptyVersions: "Пока нет сохраненных версий.",
+        version: "Версия",
+        points: "точек",
+        load: "Загрузить",
+        animate: "Открыть анимацию",
+        delete: "Удалить",
+        newPoint: "Новая точка",
+        animationTitle: "Анимация шара",
+        speed: "Скорость, сек",
+        gradientMove: "Перемещение градиентов, %",
+        rotation: "Вращение, градусы",
+        verticalMove: "Вертикальное движение, px",
+        glowMove: "Движение подсветки, px",
+        glowPulse: "Пульсация подсветки",
+        glowSpin: "Вращение подсветки, сек",
+        shapeChange: "Изменение формы, %",
+        animationCss: "CSS анимации",
+        animationTab: "Анимация",
+        colorTab: "Цвет",
+        sceneTab: "Сцена",
+        colorTransition: "Переход цветов",
+        targetColor: "Цвет перехода",
+        resetColor: "Вернуть исходный цвет",
+        colorSpeed: "Скорость перехода, сек",
+        colorOpacity: "Прозрачность второго цвета",
+        colorCss: "CSS перехода цвета",
+        uploadBackground: "Загрузить фон",
+        removeBackground: "Удалить фон",
+        backgroundColor: "Цвет фона",
+        frameRatio: "Пропорции фрейма",
+        customSize: "Свой размер",
+        frameWidth: "Ширина, px",
+        frameHeight: "Высота, px",
+        orbSize: "Размер шара, %",
+        orbX: "Положение X, %",
+        orbY: "Положение Y, %",
+        videoDuration: "Длительность, сек",
+        saveVideo: "Сохранить видео MP4",
+        savePng: "Выгрузить сцену PNG",
+        recordingVideo: "Записываю видео…",
+        videoFallback: "MP4 недоступен в этом браузере — сохранён совместимый видеофайл."
+      },
+      en: {
+        title: "Orb Editor",
+        subtitle: "Color points export as real CSS radial-gradient layers.",
+        reset: "Reset",
+        settings: "Settings",
+        addPoint: "Add point",
+        addHighlight: "Add highlight",
+        colorPoints: "Color points",
+        selectedPoint: "Selected point",
+        name: "Name",
+        color: "Color",
+        xPercent: "X, %",
+        yPercent: "Y, %",
+        opacity: "Opacity",
+        spotSize: "Spot size, %",
+        arcSize: "Arc size, %",
+        pointType: "Type",
+        typeSpot: "Spot",
+        typeArc: "Arc",
+        spotRotation: "Spot rotation, °",
+        spotBlur: "Spot blur, %",
+        glowSection: "Base and glow",
+        baseColor: "Base color",
+        baseOpacity: "Base opacity",
+        outlineSection: "Orb outline",
+        outlineName: "Outline",
+        transparency: "Transparency",
+        blurPx: "Blur, px",
+        thicknessPx: "Thickness, px",
+        sizePercent: "Size, %",
+        versionHistory: "Version history",
+        saveCurrent: "Save current version",
+        readyCss: "Ready CSS",
+        exportProject: "Export",
+        loadProject: "Load",
+        importError: "The project file could not be loaded.",
+        copyCss: "Copy CSS",
+        smallCss: "CSS for 66px",
+        largeCss: "CSS for 300px",
+        emptyVersions: "No saved versions yet.",
+        version: "Version",
+        points: "points",
+        load: "Load",
+        animate: "Open animation",
+        delete: "Delete",
+        newPoint: "New point",
+        animationTitle: "Orb animation",
+        speed: "Speed, sec",
+        gradientMove: "Gradient movement, %",
+        rotation: "Rotation, degrees",
+        verticalMove: "Vertical movement, px",
+        glowMove: "Glow movement, px",
+        glowPulse: "Glow pulse",
+        glowSpin: "Glow rotation, sec",
+        shapeChange: "Shape change, %",
+        animationCss: "Animation CSS",
+        animationTab: "Animation",
+        colorTab: "Color",
+        sceneTab: "Scene",
+        colorTransition: "Color transition",
+        targetColor: "Transition color",
+        resetColor: "Reset to original color",
+        colorSpeed: "Transition speed, sec",
+        colorOpacity: "Second color opacity",
+        colorCss: "Color transition CSS",
+        uploadBackground: "Upload background",
+        removeBackground: "Remove background",
+        backgroundColor: "Background color",
+        frameRatio: "Frame ratio",
+        customSize: "Custom size",
+        frameWidth: "Width, px",
+        frameHeight: "Height, px",
+        orbSize: "Orb size, %",
+        orbX: "Position X, %",
+        orbY: "Position Y, %",
+        videoDuration: "Duration, sec",
+        saveVideo: "Save MP4 video",
+        savePng: "Export scene PNG",
+        recordingVideo: "Recording video…",
+        videoFallback: "MP4 is unavailable in this browser, so a compatible video file was saved."
+      }
+    };
+
+    const stage = document.getElementById("stage");
+    const sphere = document.getElementById("sphere");
+    const sphereWrap = document.getElementById("sphereWrap");
+    const colorList = document.getElementById("colorList");
+    const versionList = document.getElementById("versionList");
+    const cssOutput = document.getElementById("cssOutput");
+    const cssCodeView = document.getElementById("cssCodeView");
+    const projectFileInput = document.getElementById("projectFileInput");
+    const fields = {
+      name: document.getElementById("nameInput"),
+      color: document.getElementById("colorInput"),
+      x: document.getElementById("xInput"),
+      y: document.getElementById("yInput"),
+      alpha: document.getElementById("alphaInput"),
+      radius: document.getElementById("radiusInput"),
+      shape: document.getElementById("shapeInput"),
+      angle: document.getElementById("angleInput"),
+      blur: document.getElementById("pointBlurInput")
+    };
+    const glowFields = {
+      color: document.getElementById("glowColorInput"),
+      alpha: document.getElementById("glowAlphaInput"),
+      blur: document.getElementById("glowBlurInput"),
+      size: document.getElementById("glowSizeInput"),
+      x: document.getElementById("glowXInput"),
+      y: document.getElementById("glowYInput")
+    };
+    const baseFields = {
+      color: document.getElementById("baseColorInput"),
+      alpha: document.getElementById("baseAlphaInput")
+    };
+    const fieldLabels = {};
+    Object.entries(fields).forEach(([key, input]) => {
+      fieldLabels[key] = input.closest("label").querySelector("span");
+    });
+
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const versionKey = "orb-gradient-editor-versions";
+    let points = clone(defaults);
+    let glow = { ...defaultGlow };
+    let base = { ...defaultBase };
+    let outline = { ...defaultOutline };
+    let versions = loadVersions();
+    let selectedId = points[0].id;
+    let draggedPointId = null;
+    let cssSize = "large";
+    let currentLang = localStorage.getItem("orb-gradient-editor-lang") || "ru";
+
+    function t(key) {
+      return translations[currentLang][key] || translations.ru[key] || key;
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = currentLang;
+      document.querySelectorAll("[data-i18n]").forEach(element => {
+        element.textContent = t(element.dataset.i18n);
+      });
+      document.getElementById("langToggle").textContent = currentLang === "ru" ? "EN" : "RU";
+      document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
+      localStorage.setItem("orb-gradient-editor-lang", currentLang);
+      renderList();
+      renderVersions();
+    }
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+
+    function rgba(hex, alpha) {
+      const { r, g, b } = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function displayPointName(point) {
+      if (currentLang !== "en") return point.name;
+      const fallback = defaults.find(item => item.id === point.id);
+      return point.nameEn || fallback?.nameEn || point.name;
+    }
+
+    function buildShadow(size = cssSize, sourceOutline = outline) {
+      const isSmall = size === "small";
+      const base = isSmall ? smallShadow : largeShadow;
+      const scale = isSmall ? 0.22 : 1;
+      const blur = Math.max(0, Math.round(sourceOutline.blur * scale));
+      const spread = Math.max(0, Number((sourceOutline.spread * scale).toFixed(2)));
+      return [
+        ...base,
+        `0 0 0 ${spread}px ${rgba(sourceOutline.color, sourceOutline.alpha)}`,
+        `0 0 ${blur}px ${rgba(sourceOutline.color, sourceOutline.alpha * 0.86)}`
+      ];
+    }
+
+    function svgArcForPoint(point, x = point.x, y = point.y, alpha = point.alpha) {
+      const blur = Math.max(0.5, Number(point.blur ?? 58) / 12);
+      const radius = Math.min(42, Math.max(10, Number(point.radius) * 0.56));
+      const innerX = x - radius * 0.44;
+      const angle = Number(point.angle || 0);
+      const transform = `rotate(${angle} ${x} ${y})`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><mask id="m" maskUnits="userSpaceOnUse" x="-100" y="-100" width="300" height="300"><rect x="-100" y="-100" width="300" height="300" fill="white"/><circle cx="${innerX}" cy="${y}" r="${radius}" transform="${transform}" fill="black"/></mask><filter id="b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs><g filter="url(#b)"><g mask="url(#m)"><circle cx="${x}" cy="${y}" r="${radius}" transform="${transform}" fill="${point.color}" fill-opacity="${alpha}"/></g></g></svg>`;
+      return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+    }
+
+    function gradientForPoint(point) {
+      if (point.shape === "arc") {
+        return svgArcForPoint(point);
+      }
+      const softness = Number(point.blur ?? 58);
+      const core = Math.max(0, Math.round(point.radius * (0.58 - softness * 0.0048)));
+      const mid = Math.max(core + 1, Math.round(point.radius * (0.72 + softness * 0.0015)));
+      return `radial-gradient(${point.shape || "circle"} at ${point.x}% ${point.y}%, ${rgba(point.color, point.alpha)} 0 ${core}%, ${rgba(point.color, point.alpha * 0.58)} ${mid}%, ${rgba(point.color, 0)} ${point.radius}%)`;
+    }
+
+    function buildBackground() {
+      return [...points.map(gradientForPoint), baseGradient].join(",\n        ");
+    }
+
+    function buildBackgroundSize() {
+      return [...points.map((point, index) => {
+        if (point.shape === "arc") {
+          return "100% 100%";
+        }
+        return `${index % 2 ? 116 : 120}% ${index % 2 ? 116 : 120}%`;
+      }), "100% 100%"].join(", ");
+    }
+
+    function buildPosition(offset = 0) {
+      return [...points.map((point, index) => {
+        const wave = index % 2 ? -offset : offset;
+        return `${point.x + wave}% ${point.y - wave}%`;
+      }), "50% 50%"].join(", ");
+    }
+
+    function glowCss(scale = 1) {
+      const blur = Math.round(glow.blur * scale);
+      return `content: "";
+  position: absolute;
+  left: ${glow.x}%;
+  top: ${glow.y}%;
+  width: ${glow.size}%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, ${rgba(glow.color, glow.alpha)} 0 24%, ${rgba(glow.color, 0)} 72%);
+  filter: blur(${blur}px) saturate(1.12);
+  transform: translate(-50%, -50%);
+  pointer-events: none;`;
+    }
+
+    function buildCss(size = cssSize) {
+      const isSmall = size === "small";
+      const shadow = buildShadow(size);
+      const width = isSmall ? "66px" : "300px";
+      const move = isSmall ? "-1px" : "-3px";
+      const glowScale = isSmall ? 0.22 : 1;
+      return `.hologram-sphere-wrap {
+  position: relative;
+  width: ${width};
+  height: ${width};
+}
+
+.hologram-sphere-wrap::before {
+  ${glowCss(glowScale).replace(/\n/g, "\n  ")}
+}
+
+.hologram-sphere {
+  position: relative;
+  z-index: 1;
+  width: ${width};
+  height: ${width};
+  border-radius: 50%;
+  background-color: ${rgba(base.color, base.alpha)};
+  background-image:
+        ${buildBackground()};
+  background-size: ${buildBackgroundSize()};
+  background-position: ${buildPosition(0)};
+  background-repeat: no-repeat;
+  box-shadow:
+        ${shadow.join(",\n        ")};
+  backdrop-filter: blur(1px);
+  animation: bubble-orbit 8s ease-in-out infinite;
+}
+
+@keyframes bubble-orbit {
+  0%, 100% {
+    background-position: ${buildPosition(0)};
+    transform: translateY(0) rotate(0deg) scale(1);
+    filter: saturate(1.08) brightness(1);
+  }
+  45% {
+    background-position: ${buildPosition(5)};
+    transform: translateY(${move}) rotate(7deg) scale(1.014);
+    filter: saturate(1.14) brightness(1.025);
+  }
+  72% {
+    background-position: ${buildPosition(2)};
+    transform: translateY(0) rotate(12deg) scale(0.998);
+    filter: saturate(1.1) brightness(1.01);
+  }
+}`;
+    }
+
+    function renderCssCode(css) {
+      const lines = css.split("\n");
+      const backgroundLine = lines.findIndex(line => line.includes("background-image:"));
+      const shadowLine = lines.findIndex(line => line.includes("box-shadow:"));
+      const selectedPointIndex = points.findIndex(point => point.id === selectedId);
+      cssCodeView.innerHTML = "";
+      let selectedLine = null;
+      lines.forEach((line, index) => {
+        const row = document.createElement("span");
+        row.className = "css-code-line";
+        row.textContent = line || " ";
+        const isSelectedPointLine = selectedPointIndex >= 0 && index === backgroundLine + 1 + selectedPointIndex;
+        const isSelectedOutlineLine = selectedId === "outline" &&
+          shadowLine >= 0 &&
+          index >= shadowLine + 1 + largeShadow.length &&
+          index <= shadowLine + 2 + largeShadow.length;
+        if (isSelectedPointLine || isSelectedOutlineLine) {
+          row.classList.add("selected-gradient");
+          if (!selectedLine) selectedLine = row;
+        }
+        cssCodeView.append(row);
+      });
+      if (selectedLine) {
+        requestAnimationFrame(() => {
+          const viewRect = cssCodeView.getBoundingClientRect();
+          const lineRect = selectedLine.getBoundingClientRect();
+          const lineTopInside = cssCodeView.scrollTop + lineRect.top - viewRect.top;
+          const target = lineTopInside - cssCodeView.clientHeight / 2 + lineRect.height / 2;
+          cssCodeView.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+        });
+      }
+    }
+
+    function currentState(name = "") {
+      return {
+        id: `version-${Date.now()}`,
+        name: name || `${t("version")} ${new Date().toLocaleString(currentLang === "ru" ? "ru-RU" : "en-US", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`,
+        createdAt: new Date().toISOString(),
+        points: clone(points),
+        glow: { ...glow },
+        base: { ...base },
+        outline: { ...outline }
+      };
+    }
+
+    function projectData() {
+      return {
+        format: "iridescent-orb-editor",
+        formatVersion: 1,
+        exportedAt: new Date().toISOString(),
+        settings: {
+          points: clone(points),
+          glow: { ...glow },
+          base: { ...base },
+          outline: { ...outline },
+          cssSize
+        },
+        versions: clone(versions),
+        css: {
+          large: buildCss("large"),
+          small: buildCss("small")
+        }
+      };
+    }
+
+    function downloadProject() {
+      const blob = new Blob([JSON.stringify(projectData(), null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      link.href = URL.createObjectURL(blob);
+      link.download = `orb-project-${stamp}.json`;
+      document.body.append(link);
+      link.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(link.href);
+        link.remove();
+      }, 2000);
+    }
+
+    function validProjectSettings(settings) {
+      return settings &&
+        Array.isArray(settings.points) &&
+        settings.points.length > 0 &&
+        settings.points.every(point =>
+          point &&
+          typeof point.id === "string" &&
+          typeof point.color === "string" &&
+          Number.isFinite(Number(point.x)) &&
+          Number.isFinite(Number(point.y))
+        );
+    }
+
+    function loadProjectData(data) {
+      const settings = data?.settings || data;
+      if (!validProjectSettings(settings)) throw new Error("Invalid project");
+      points = clone(settings.points);
+      glow = { ...defaultGlow, ...(settings.glow || {}) };
+      base = { ...defaultBase, ...(settings.base || {}) };
+      outline = { ...defaultOutline, ...(settings.outline || {}) };
+      cssSize = settings.cssSize === "small" ? "small" : "large";
+      if (Array.isArray(data?.versions)) {
+        versions = clone(data.versions).slice(0, 12);
+        saveVersions();
+      }
+      selectedId = points[0].id;
+      document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
+      render();
+    }
+
+    async function importProjectFile(file) {
+      try {
+        const data = JSON.parse(await file.text());
+        loadProjectData(data);
+      } catch (error) {
+        window.alert(t("importError"));
+      } finally {
+        projectFileInput.value = "";
+      }
+    }
+
+    function loadVersions() {
+      try {
+        return JSON.parse(localStorage.getItem(versionKey) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveVersions() {
+      localStorage.setItem(versionKey, JSON.stringify(versions));
+    }
+
+    function escapeAttribute(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderVersions() {
+      versionList.innerHTML = "";
+      if (!versions.length) {
+        const empty = document.createElement("div");
+        empty.className = "hint";
+        empty.textContent = t("emptyVersions");
+        versionList.append(empty);
+        return;
+      }
+
+      versions.forEach(version => {
+        const card = document.createElement("div");
+        card.className = "version-card";
+        card.innerHTML = `
+          <div class="version-row">
+            <span class="version-info">
+              <input class="version-name-input" type="text" value="${escapeAttribute(version.name)}" aria-label="${t("version")}">
+            </span>
+            <button class="delete-btn" type="button" data-action="delete" title="${t("delete")}">×</button>
+          </div>
+          <div class="version-actions">
+            <button class="action-btn compact" type="button" data-action="load">${t("load")}</button>
+            <button class="action-btn compact primary" type="button" data-action="animate">${t("animate")}</button>
+          </div>
+        `;
+        const nameInput = card.querySelector(".version-name-input");
+        let committedName = version.name;
+        nameInput.addEventListener("click", event => event.stopPropagation());
+        nameInput.addEventListener("input", () => {
+          version.name = nameInput.value;
+        });
+        nameInput.addEventListener("blur", () => {
+          version.name = nameInput.value.trim() || committedName;
+          nameInput.value = version.name;
+          committedName = version.name;
+          saveVersions();
+        });
+        nameInput.addEventListener("keydown", event => {
+          if (event.key === "Enter") nameInput.blur();
+          if (event.key === "Escape") {
+            version.name = committedName;
+            nameInput.value = committedName;
+            nameInput.blur();
+          }
+        });
+        card.addEventListener("click", event => {
+          const action = event.target.dataset.action;
+          if (!action) return;
+          if (action === "load") loadVersion(version.id);
+          if (action === "animate") openAnimationWindow(version);
+          if (action === "delete") deleteVersion(version.id);
+        });
+        versionList.append(card);
+      });
+    }
+
+    function saveCurrentVersion() {
+      versions = [currentState(), ...versions].slice(0, 12);
+      saveVersions();
+      renderVersions();
+    }
+
+    function loadVersion(id) {
+      const version = versions.find(item => item.id === id);
+      if (!version) return;
+      points = clone(version.points);
+      glow = { ...defaultGlow, ...version.glow };
+      base = { ...defaultBase, ...version.base };
+      outline = { ...defaultOutline, ...version.outline };
+      selectedId = points[0]?.id;
+      render();
+    }
+
+    function deleteVersion(id) {
+      versions = versions.filter(item => item.id !== id);
+      saveVersions();
+      renderVersions();
+    }
+
+    function buildAnimationHtml(version) {
+      version = {
+        ...version,
+        base: { ...defaultBase, ...version.base },
+        outline: { ...defaultOutline, ...version.outline }
+      };
+      const state = JSON.stringify(version).replace(/</g, "\\u003c");
+      const editorUrl = JSON.stringify(window.location.href).replace(/</g, "\\u003c");
+      const shadows = {
+        large: buildShadow("large", version.outline),
+        small: buildShadow("small", version.outline),
+        baseGradient
+      };
+      const shadowJson = JSON.stringify(shadows).replace(/</g, "\\u003c");
+      return `<!doctype html>
+<html lang="${currentLang}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${t("animationTitle")}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      display: grid;
+      grid-template-columns: minmax(620px, 1fr) minmax(340px, 420px);
+      gap: 18px;
+      height: 100vh;
+      margin: 0;
+      padding: 16px;
+      overflow: hidden;
+      background: #fbfbfc;
+      color: #101114;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .workspace, .panel {
+      min-height: 0;
+      border: 1px solid rgba(0, 0, 0, 0.035);
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: 0 18px 54px rgba(32, 34, 41, 0.07);
+    }
+    .workspace {
+      display: grid;
+      grid-template-rows: minmax(280px, 1.08fr) minmax(260px, 0.92fr);
+      gap: 20px;
+      padding: 36px 40px 28px;
+      overflow: hidden;
+    }
+    .preview-stage {
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      border-radius: 24px;
+      background: #f7f7f8;
+      overflow: hidden;
+    }
+    .scene-frame {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      border-radius: 22px;
+      background-color: #f7f7f8;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+    body.scene-mode .preview-stage {
+      padding: 18px;
+      background: #fff;
+    }
+    body.scene-mode .scene-frame {
+      box-shadow: 0 0 0 1px #e2e3e7;
+    }
+    body.scene-mode .workspace {
+      grid-template-rows: minmax(0, 1fr);
+    }
+    body.scene-mode .code-area {
+      display: none;
+    }
+    .code-area {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
+      min-height: 0;
+      color: #757985;
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .sphere-wrap {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      transform-origin: center;
+    }
+    .sphere-wrap::before {
+      content: "";
+      position: absolute;
+      left: var(--glow-x);
+      top: var(--glow-y);
+      width: var(--glow-size);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%),
+        conic-gradient(from 0deg, var(--glow-color), transparent 28%, var(--glow-color) 56%, transparent 78%, var(--glow-color));
+      filter: blur(var(--glow-blur)) saturate(1.28) hue-rotate(var(--glow-hue));
+      transform: translate(-50%, -50%);
+      opacity: var(--glow-high);
+      will-change: transform, opacity, filter;
+      animation: glow-drift var(--glow-spin) linear infinite;
+    }
+    .sphere {
+      position: relative;
+      z-index: 1;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background-color: var(--sphere-base);
+      background-image: var(--sphere-bg);
+      background-size: var(--size-a);
+      background-position: var(--pos-a);
+      background-repeat: no-repeat;
+      box-shadow: var(--sphere-shadow);
+      animation: bubble-motion var(--speed) ease-in-out infinite;
+    }
+    .sphere::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-color: var(--sphere-base);
+      background-image: var(--color-bg-target);
+      background-size: var(--color-bg-size);
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .sphere.color-mode::after {
+      animation: color-flow var(--color-speed) ease-in-out infinite;
+    }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(7px, 1.15vh, 12px);
+      padding: 22px 24px;
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .panel-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h1 { margin: 0; font-size: 20px; }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 4px;
+      border-radius: 16px;
+      background: #f3f3f5;
+    }
+    .tab-btn {
+      min-height: 38px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: #757985;
+      cursor: pointer;
+      font: 750 13px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .tab-btn.active {
+      background: #fff;
+      color: #101114;
+    }
+    .tab-content {
+      display: none;
+      min-height: 0;
+    }
+    .tab-content.active {
+      display: grid;
+      gap: clamp(7px, 1.15vh, 12px);
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    #animationControls.active {
+      grid-template-rows: repeat(8, minmax(54px, auto));
+    }
+    #colorControls.active {
+      align-content: start;
+    }
+    .color-transition-list {
+      display: grid;
+      gap: 7px;
+      min-height: 0;
+      padding-right: 2px;
+      overflow-y: auto;
+    }
+    .color-transition-row {
+      display: grid;
+      grid-template-columns: 20px minmax(0, 1fr) 88px 30px;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 7px 10px;
+      border-radius: 14px;
+      background: #f7f7f8;
+      color: #101114;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .color-transition-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--color);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+    .color-transition-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .color-transition-input {
+      width: 88px;
+      height: 32px;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .color-reset-btn {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: #ededf0;
+      color: #15161a;
+      cursor: pointer;
+      font: 700 18px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .color-reset-btn:hover {
+      background: #e3e3e7;
+    }
+    .color-transition-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-transition-input::-webkit-color-swatch { border: 0; border-radius: 10px; }
+    .color-transition-input::-moz-color-swatch { border: 0; border-radius: 10px; }
+    .scene-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .scene-btn,
+    select,
+    input[type="number"] {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: 14px;
+      background: #f3f3f5;
+      color: #101114;
+      font: 750 13px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .scene-btn {
+      padding: 0 14px;
+      cursor: pointer;
+    }
+    .scene-btn.primary {
+      background: #15161a;
+      color: #fff;
+    }
+    .scene-btn:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+    select,
+    input[type="number"] {
+      padding: 0 12px;
+    }
+    .custom-size {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .custom-size.visible {
+      display: grid;
+    }
+    .video-note {
+      min-height: 16px;
+      margin: 0;
+      color: #757985;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    #backgroundInput {
+      display: none;
+    }
+    .close-btn {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: #f7f7f8;
+      color: #101114;
+      cursor: pointer;
+      font: 24px/1 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .background-color-control {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      overflow: hidden;
+      border-radius: 50%;
+      background: #f7f7f8;
+      cursor: pointer;
+    }
+    .background-color-control input {
+      position: absolute;
+      inset: -8px;
+      width: 58px;
+      height: 58px;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+    }
+    .background-color-control input::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    .background-color-control input::-webkit-color-swatch {
+      border: 7px solid #f7f7f8;
+      border-radius: 50%;
+    }
+    label { display: grid; gap: 7px; color: #757985; font-size: 13px; font-weight: 760; }
+    input[type="range"] {
+      width: 100%;
+      height: 36px;
+      padding: 0;
+      border: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      box-shadow: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      width: 22px;
+      height: 22px;
+      margin-top: -7px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 5px rgba(16, 17, 20, 0.14);
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-moz-range-track {
+      height: 8px;
+      border: 0;
+      border-radius: 999px;
+      background: #e4e4e7;
+    }
+    input[type="range"]::-moz-range-progress {
+      height: 8px;
+      border-radius: 999px;
+      background: #15161a;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border: 0;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 5px rgba(16, 17, 20, 0.14);
+    }
+    input[type="range"]:focus { outline: none; }
+    textarea {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      padding: 14px;
+      border: 0;
+      border-radius: 14px;
+      background: #f7f7f8;
+      resize: none;
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    @media (max-width: 1050px) {
+      body {
+        grid-template-columns: minmax(0, 1fr) 340px;
+      }
+      .workspace {
+        padding: 24px;
+      }
+    }
+    @media (max-width: 780px) {
+      body {
+        display: block;
+        height: auto;
+        overflow: auto;
+      }
+      .workspace {
+        min-height: 920px;
+        margin-bottom: 16px;
+      }
+      .panel {
+        min-height: 720px;
+      }
+    }
+    @keyframes bubble-motion {
+      0%, 100% {
+        background-position: var(--pos-a);
+        background-size: var(--size-a);
+        transform: translateY(0) scale(1);
+        border-radius: var(--shape-a);
+        filter: saturate(1.08) brightness(1);
+      }
+      45% {
+        background-position: var(--pos-b);
+        background-size: var(--size-b);
+        transform: translateY(var(--float)) scale(1.006);
+        border-radius: var(--shape-b);
+        filter: saturate(1.14) brightness(1.025);
+      }
+      72% {
+        background-position: var(--pos-c);
+        background-size: var(--size-c);
+        transform: translateY(var(--float-half)) scale(0.998);
+        border-radius: var(--shape-c);
+        filter: saturate(1.1) brightness(1.01);
+      }
+    }
+    @keyframes glow-drift {
+      0% {
+        transform: translate(calc(-50% + var(--glow-back)), -50%) rotate(0deg);
+        opacity: var(--glow-high);
+        filter: blur(var(--glow-blur)) saturate(1.2) hue-rotate(0deg);
+      }
+      50% {
+        transform: translate(calc(-50% + var(--glow-move)), calc(-50% + var(--glow-rise))) rotate(180deg);
+        opacity: var(--glow-low);
+        filter: blur(var(--glow-blur)) saturate(1.45) hue-rotate(var(--glow-hue));
+      }
+      100% {
+        transform: translate(calc(-50% + var(--glow-back)), -50%) rotate(360deg);
+        opacity: var(--glow-high);
+        filter: blur(var(--glow-blur)) saturate(1.2) hue-rotate(0deg);
+      }
+    }
+    @keyframes color-flow {
+      0%, 100% { opacity: 0; }
+      50% { opacity: var(--color-opacity); }
+    }
+  </style>
+</head>
+<body>
+  <main class="workspace">
+    <section class="preview-stage">
+      <div class="scene-frame" id="sceneFrame">
+        <div class="sphere-wrap" id="wrap"><div class="sphere" id="sphere"></div></div>
+      </div>
+    </section>
+    <label class="code-area"><span id="codeLabel">${t("animationCss")}</span> <textarea id="code" spellcheck="false"></textarea></label>
+  </main>
+  <aside class="panel">
+    <div class="panel-head">
+      <h1>${version.name}</h1>
+      <div class="panel-head-actions">
+        <label class="background-color-control" title="${t("backgroundColor")}">
+          <input id="backgroundColor" type="color" value="#f7f7f8" aria-label="${t("backgroundColor")}">
+        </label>
+        <button class="close-btn" id="closeBtn" type="button" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" id="animationTab" type="button">${t("animationTab")}</button>
+      <button class="tab-btn" id="colorTab" type="button">${t("colorTab")}</button>
+      <button class="tab-btn" id="sceneTab" type="button">${t("sceneTab")}</button>
+    </div>
+    <div class="tab-content active" id="animationControls">
+      <label>${t("speed")} <input id="speed" type="range" min="2" max="20" value="8" step="0.5"></label>
+      <label>${t("gradientMove")} <input id="shift" type="range" min="0" max="36" value="18" step="1"></label>
+      <label>${t("rotation")} <input id="rotation" type="range" min="0" max="180" value="38" step="1"></label>
+      <label>${t("verticalMove")} <input id="float" type="range" min="0" max="18" value="3" step="1"></label>
+      <label>${t("glowMove")} <input id="glowMove" type="range" min="0" max="40" value="12" step="1"></label>
+      <label>${t("glowPulse")} <input id="glowPulse" type="range" min="0" max="0.55" value="0.14" step="0.01"></label>
+      <label>${t("glowSpin")} <input id="glowSpin" type="range" min="2" max="24" value="10" step="0.5"></label>
+      <label>${t("shapeChange")} <input id="shape" type="range" min="0" max="8" value="2" step="1"></label>
+    </div>
+    <div class="tab-content" id="colorControls">
+      <label>${t("colorSpeed")} <input id="colorSpeed" type="range" min="2" max="30" value="10" step="0.5"></label>
+      <label>${t("colorOpacity")} <input id="colorOpacity" type="range" min="0" max="1" value="1" step="0.01"></label>
+      <label>${t("colorTransition")}
+        <div class="color-transition-list" id="colorTransitionList"></div>
+      </label>
+    </div>
+    <div class="tab-content" id="sceneControls">
+      <input id="backgroundInput" type="file" accept="image/*">
+      <div class="scene-actions">
+        <button class="scene-btn" id="uploadBackgroundBtn" type="button">${t("uploadBackground")}</button>
+        <button class="scene-btn" id="removeBackgroundBtn" type="button">${t("removeBackground")}</button>
+      </div>
+      <label>${t("frameRatio")}
+        <select id="frameRatio">
+          <option value="16:9">16:9</option>
+          <option value="1:1">1:1</option>
+          <option value="4:5">4:5</option>
+          <option value="9:16">9:16</option>
+          <option value="custom">${t("customSize")}</option>
+        </select>
+      </label>
+      <div class="custom-size" id="customSizeFields">
+        <label>${t("frameWidth")} <input id="frameWidth" type="number" min="240" max="3840" value="1280"></label>
+        <label>${t("frameHeight")} <input id="frameHeight" type="number" min="240" max="3840" value="720"></label>
+      </div>
+      <label>${t("orbSize")} <input id="orbSize" type="range" min="3" max="90" value="34" step="1"></label>
+      <label>${t("orbX")} <input id="orbX" type="range" min="0" max="100" value="50" step="1"></label>
+      <label>${t("orbY")} <input id="orbY" type="range" min="0" max="100" value="50" step="1"></label>
+      <label>${t("videoDuration")} <input id="videoDuration" type="range" min="2" max="20" value="8" step="1"></label>
+      <button class="scene-btn" id="savePngBtn" type="button">${t("savePng")}</button>
+      <button class="scene-btn primary" id="saveVideoBtn" type="button">${t("saveVideo")}</button>
+      <p class="video-note" id="videoNote"></p>
+    </div>
+  </aside>
+  <script>
+    const version = ${state};
+    const shadows = ${shadowJson};
+    const controls = ["speed", "shift", "rotation", "float", "glowMove", "glowPulse", "glowSpin", "shape"].reduce((acc, id) => {
+      acc[id] = document.getElementById(id);
+      return acc;
+    }, {});
+    const editorUrl = ${editorUrl};
+    const sphere = document.getElementById("sphere");
+    const wrap = document.getElementById("wrap");
+    const sceneFrame = document.getElementById("sceneFrame");
+    const previewStage = document.querySelector(".preview-stage");
+    const code = document.getElementById("code");
+    const codeLabel = document.getElementById("codeLabel");
+    const animationTab = document.getElementById("animationTab");
+    const colorTab = document.getElementById("colorTab");
+    const sceneTab = document.getElementById("sceneTab");
+    const animationControls = document.getElementById("animationControls");
+    const colorControls = document.getElementById("colorControls");
+    const colorTransitionList = document.getElementById("colorTransitionList");
+    const colorSpeed = document.getElementById("colorSpeed");
+    const colorOpacity = document.getElementById("colorOpacity");
+    const sceneControls = document.getElementById("sceneControls");
+    const backgroundInput = document.getElementById("backgroundInput");
+    const backgroundColor = document.getElementById("backgroundColor");
+    const uploadBackgroundBtn = document.getElementById("uploadBackgroundBtn");
+    const removeBackgroundBtn = document.getElementById("removeBackgroundBtn");
+    const frameRatio = document.getElementById("frameRatio");
+    const frameWidth = document.getElementById("frameWidth");
+    const frameHeight = document.getElementById("frameHeight");
+    const customSizeFields = document.getElementById("customSizeFields");
+    const orbSize = document.getElementById("orbSize");
+    const orbX = document.getElementById("orbX");
+    const orbY = document.getElementById("orbY");
+    const videoDuration = document.getElementById("videoDuration");
+    const savePngBtn = document.getElementById("savePngBtn");
+    const saveVideoBtn = document.getElementById("saveVideoBtn");
+    const videoNote = document.getElementById("videoNote");
+    const recordingText = ${JSON.stringify(t("recordingVideo"))};
+    const saveVideoText = ${JSON.stringify(t("saveVideo"))};
+    const fallbackText = ${JSON.stringify(t("videoFallback"))};
+    let backgroundImage = null;
+    let backgroundUrl = "";
+    let sceneBackgroundColor = "#f7f7f8";
+    let activeTab = "animation";
+    const targetColors = Object.fromEntries(version.points.map((point, index) => [
+      point.id,
+      version.points[(index + 1) % version.points.length]?.color || point.color
+    ]));
+    document.getElementById("closeBtn").addEventListener("click", () => {
+      if (window.opener && !window.opener.closed) window.opener.focus();
+      window.location.href = editorUrl;
+    });
+
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      return { r: parseInt(clean.slice(0, 2), 16), g: parseInt(clean.slice(2, 4), 16), b: parseInt(clean.slice(4, 6), 16) };
+    }
+    function rgba(hex, alpha) {
+      const { r, g, b } = hexToRgb(hex);
+      return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+    }
+    function svgArcForPoint(point, x = point.x, y = point.y, alpha = point.alpha) {
+      const blur = Math.max(0.5, Number(point.blur ?? 58) / 12);
+      const radius = Math.min(42, Math.max(10, Number(point.radius) * 0.56));
+      const innerX = x - radius * 0.44;
+      const angle = Number(point.angle || 0);
+      const transform = 'rotate(' + angle + ' ' + x + ' ' + y + ')';
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><mask id="m" maskUnits="userSpaceOnUse" x="-100" y="-100" width="300" height="300"><rect x="-100" y="-100" width="300" height="300" fill="white"/><circle cx="' + innerX + '" cy="' + y + '" r="' + radius + '" transform="' + transform + '" fill="black"/></mask><filter id="b" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="' + blur + '"/></filter></defs><g filter="url(#b)"><g mask="url(#m)"><circle cx="' + x + '" cy="' + y + '" r="' + radius + '" transform="' + transform + '" fill="' + point.color + '" fill-opacity="' + alpha + '"/></g></g></svg>';
+      return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+    }
+    function gradientForPoint(point, x = point.x, y = point.y, alpha = point.alpha, color = point.color) {
+      if (point.shape === "arc") {
+        return svgArcForPoint({ ...point, color }, x, y, alpha);
+      }
+      const softness = Number(point.blur ?? 58);
+      const core = Math.max(0, Math.round(point.radius * (0.58 - softness * 0.0048)));
+      const mid = Math.max(core + 1, Math.round(point.radius * (0.72 + softness * 0.0015)));
+      return "radial-gradient(" + (point.shape || "circle") + " at " + x + "% " + y + "%, " + rgba(color, alpha) + " 0 " + core + "%, " + rgba(color, alpha * 0.58) + " " + mid + "%, " + rgba(color, 0) + " " + point.radius + "%)";
+    }
+    function buildBackground(phase = 0, strength = 0, colors = null) {
+      const layers = version.points.map((point, index) => {
+        const angle = phase + index * 0.82;
+        const driftX = Math.cos(angle) * strength * (index % 2 ? 0.68 : 1);
+        const driftY = Math.sin(angle * 0.74) * strength * (index % 2 ? 0.42 : 0.58);
+        const color = colors?.[point.id] || point.color;
+        if (point.shape === "arc") {
+          return gradientForPoint(point, point.x, point.y, point.alpha, color);
+        }
+        const x = Math.max(-10, Math.min(110, point.x + driftX));
+        const y = Math.max(-10, Math.min(110, point.y + driftY));
+        return gradientForPoint(point, x.toFixed(2), y.toFixed(2), point.alpha, color);
+      });
+      return [...layers, shadows.baseGradient].join(",\\n        ");
+    }
+    function buildBackgroundSize() {
+      return [...version.points.map((point, index) => {
+        if (point.shape === "arc") {
+          return "100% 100%";
+        }
+        return index % 2 ? "116% 116%" : "120% 120%";
+      }), "100% 100%"].join(", ");
+    }
+    function buildBackgroundSizeForTurn(amount = 0, phase = 1) {
+      return [...version.points.map((point, index) => {
+        if (point.shape === "arc") {
+          return "100% 100%";
+        }
+        const base = index % 2 ? 116 : 120;
+        const x = Math.max(92, Math.round(base + amount * (index % 2 ? -0.5 : 0.7) * phase));
+        const y = Math.max(92, Math.round(base + amount * (index % 2 ? 0.8 : -0.45) * phase));
+        return x + "% " + y + "%";
+      }), "100% 100%"].join(", ");
+    }
+    function buildPosition(offset = 0) {
+      return [...version.points.map((point, index) => {
+        const wave = index % 2 ? -offset : offset;
+        return (point.x + wave) + "% " + (point.y - wave) + "%";
+      }), "50% 50%"].join(", ");
+    }
+    function syncRangeFill(input) {
+      const min = Number(input.min || 0);
+      const max = Number(input.max || 100);
+      const fill = max === min ? 0 : ((Number(input.value) - min) / (max - min)) * 100;
+      const clampedFill = Math.max(0, Math.min(100, fill));
+      input.style.setProperty("--range-fill", clampedFill + "%");
+      input.style.background = "linear-gradient(to right, #15161a 0 " + clampedFill + "%, #e4e4e7 " + clampedFill + "% 100%) center / 100% 8px no-repeat";
+    }
+    function pointName(point) {
+      return document.documentElement.lang === "en" ? (point.nameEn || point.name) : point.name;
+    }
+    function renderColorControls() {
+      colorTransitionList.innerHTML = "";
+      version.points.forEach(point => {
+        const row = document.createElement("div");
+        row.className = "color-transition-row";
+        const swatch = document.createElement("span");
+        swatch.className = "color-transition-swatch";
+        swatch.style.setProperty("--color", point.color);
+        const name = document.createElement("span");
+        name.className = "color-transition-name";
+        name.textContent = pointName(point);
+        const input = document.createElement("input");
+        input.className = "color-transition-input";
+        input.type = "color";
+        input.value = targetColors[point.id];
+        input.setAttribute("aria-label", pointName(point));
+        input.addEventListener("input", () => {
+          targetColors[point.id] = input.value;
+          applyColorTransition();
+        });
+        const resetButton = document.createElement("button");
+        resetButton.className = "color-reset-btn";
+        resetButton.type = "button";
+        resetButton.textContent = "↺";
+        resetButton.title = ${JSON.stringify(t("resetColor"))};
+        resetButton.setAttribute("aria-label", ${JSON.stringify(t("resetColor"))} + ": " + pointName(point));
+        resetButton.addEventListener("click", () => {
+          targetColors[point.id] = point.color;
+          input.value = point.color;
+          applyColorTransition();
+        });
+        row.append(swatch, name, input, resetButton);
+        colorTransitionList.append(row);
+      });
+    }
+    function applyColorTransition() {
+      sphere.style.setProperty("--color-bg-target", buildBackground(0, 0, targetColors));
+      sphere.style.setProperty("--color-bg-size", buildBackgroundSize());
+      sphere.style.setProperty("--color-speed", colorSpeed.value + "s");
+      sphere.style.setProperty("--color-opacity", colorOpacity.value);
+      syncRangeFill(colorSpeed);
+      syncRangeFill(colorOpacity);
+      if (activeTab === "color") {
+        codeLabel.textContent = ${JSON.stringify(t("colorCss"))};
+        code.value = buildColorCode();
+      }
+    }
+    function frameDimensions() {
+      if (frameRatio.value === "custom") {
+        return {
+          width: Math.max(240, Math.min(3840, Number(frameWidth.value) || 1280)),
+          height: Math.max(240, Math.min(3840, Number(frameHeight.value) || 720))
+        };
+      }
+      const parts = frameRatio.value.split(":").map(Number);
+      return { width: parts[0] * 160, height: parts[1] * 160 };
+    }
+    function fitSceneFrame() {
+      const dimensions = frameDimensions();
+      const targetRatio = dimensions.width / dimensions.height;
+      const availableWidth = Math.max(1, previewStage.clientWidth - 36);
+      const availableHeight = Math.max(1, previewStage.clientHeight - 36);
+      const availableRatio = availableWidth / availableHeight;
+      let width;
+      let height;
+      if (targetRatio >= availableRatio) {
+        width = availableWidth;
+        height = width / targetRatio;
+      } else {
+        height = availableHeight;
+        width = height * targetRatio;
+      }
+      sceneFrame.style.width = width + "px";
+      sceneFrame.style.height = height + "px";
+      sceneFrame.style.aspectRatio = dimensions.width + " / " + dimensions.height;
+      const scale = (Math.min(width, height) * Number(orbSize.value) / 100) / 300;
+      wrap.style.left = orbX.value + "%";
+      wrap.style.top = orbY.value + "%";
+      wrap.style.position = activeTab === "scene" ? "absolute" : "relative";
+      wrap.style.transform = activeTab === "scene"
+        ? "translate(-50%, -50%) scale(" + scale + ")"
+        : "";
+      sceneFrame.style.backgroundColor = activeTab === "scene" ? sceneBackgroundColor : "#f7f7f8";
+      sceneFrame.style.backgroundImage = activeTab === "scene" && backgroundUrl ? 'url("' + backgroundUrl + '")' : "";
+    }
+    function setTab(tab) {
+      activeTab = tab;
+      const isScene = tab === "scene";
+      const isColor = tab === "color";
+      const isAnimation = tab === "animation";
+      document.body.classList.toggle("scene-mode", isScene);
+      animationTab.classList.toggle("active", isAnimation);
+      colorTab.classList.toggle("active", isColor);
+      sceneTab.classList.toggle("active", isScene);
+      animationControls.classList.toggle("active", isAnimation);
+      colorControls.classList.toggle("active", isColor);
+      sceneControls.classList.toggle("active", isScene);
+      sphere.classList.toggle("color-mode", isColor);
+      if (!isScene) {
+        backgroundColor.value = "#f7f7f8";
+        sceneFrame.style.backgroundColor = "#f7f7f8";
+        sceneFrame.style.backgroundImage = "";
+        sceneFrame.style.width = "100%";
+        sceneFrame.style.height = "100%";
+        sceneFrame.style.aspectRatio = "";
+        wrap.style.position = "relative";
+        wrap.style.left = "";
+        wrap.style.top = "";
+        wrap.style.transform = "";
+        codeLabel.textContent = isColor ? ${JSON.stringify(t("colorCss"))} : ${JSON.stringify(t("animationCss"))};
+        code.value = isColor ? buildColorCode() : buildCode();
+      } else {
+        backgroundColor.value = sceneBackgroundColor;
+        requestAnimationFrame(fitSceneFrame);
+      }
+    }
+    function drawImageCover(ctx, image, width, height) {
+      ctx.fillStyle = sceneBackgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      if (!image) {
+        return;
+      }
+      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      ctx.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+    }
+    function drawCrescentLayer(width, height, point, centerX, centerY, radius, alpha) {
+      const layer = document.createElement("canvas");
+      layer.width = width;
+      layer.height = height;
+      const layerCtx = layer.getContext("2d");
+      const angle = Number(point.angle || 0) * Math.PI / 180;
+      layerCtx.translate(centerX, centerY);
+      layerCtx.rotate(angle);
+      layerCtx.translate(-centerX, -centerY);
+      layerCtx.fillStyle = rgba(point.color, alpha);
+      layerCtx.beginPath();
+      layerCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      layerCtx.fill();
+      layerCtx.globalCompositeOperation = "destination-out";
+      layerCtx.beginPath();
+      layerCtx.arc(centerX - radius * 0.44, centerY, radius, 0, Math.PI * 2);
+      layerCtx.fill();
+      return layer;
+    }
+    function drawRecordedOrb(ctx, centerX, centerY, diameter, phase) {
+      const shift = Number(controls.shift.value);
+      const pulse = Number(controls.glowPulse.value);
+      const glowMove = Number(controls.glowMove.value);
+      const floatAmount = Number(controls.float.value);
+      const floatingY = -Math.sin(phase) * floatAmount * diameter / 300;
+      const glowX = centerX + Math.cos(phase) * glowMove * diameter / 300;
+      const glowY = centerY + floatingY + Math.sin(phase) * glowMove * 0.35 * diameter / 300;
+      const glowRadius = diameter * Math.max(0.55, Number(version.glow.size) / 100);
+      const glowGradient = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius);
+      glowGradient.addColorStop(0, rgba(version.glow.color, Math.min(0.55, version.glow.alpha + pulse * 0.25)));
+      glowGradient.addColorStop(1, rgba(version.glow.color, 0));
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(glowX, glowY, glowRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      const shape = Number(controls.shape.value) / 400;
+      const shapeWave = Math.sin(phase) * shape;
+      ctx.save();
+      ctx.translate(centerX, centerY + floatingY);
+      ctx.scale(1 + shapeWave, 1 - shapeWave);
+      ctx.translate(-centerX, -(centerY + floatingY));
+      ctx.beginPath();
+      ctx.arc(centerX, centerY + floatingY, diameter / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle = rgba(version.base.color, version.base.alpha);
+      ctx.fillRect(centerX - diameter / 2, centerY + floatingY - diameter / 2, diameter, diameter);
+      const baseSheen = ctx.createRadialGradient(centerX - diameter * 0.16, centerY - diameter * 0.18, 0, centerX, centerY, diameter * 0.7);
+      baseSheen.addColorStop(0, "rgba(255,255,255,0.82)");
+      baseSheen.addColorStop(0.55, "rgba(255,255,255,0.34)");
+      baseSheen.addColorStop(1, "rgba(255,255,255,0.12)");
+      ctx.fillStyle = baseSheen;
+      ctx.fillRect(centerX - diameter / 2, centerY + floatingY - diameter / 2, diameter, diameter);
+
+      [...version.points].reverse().forEach((point, reverseIndex) => {
+        const index = version.points.length - 1 - reverseIndex;
+        const angle = phase + index * 0.82;
+        const driftX = Math.cos(angle) * shift * (index % 2 ? 0.68 : 1);
+        const driftY = Math.sin(angle * 0.74) * shift * (index % 2 ? 0.42 : 0.58);
+        const pointX = centerX - diameter / 2 + diameter * (Number(point.x) + driftX) / 100;
+        const pointY = centerY + floatingY - diameter / 2 + diameter * (Number(point.y) + driftY) / 100;
+        const radius = diameter * Number(point.radius) / 100;
+        if (point.shape === "arc") {
+          const crescentRadius = Math.min(diameter * 0.42, Math.max(diameter * 0.1, radius * 0.56));
+          const layer = drawCrescentLayer(ctx.canvas.width, ctx.canvas.height, point, pointX, pointY, crescentRadius, point.alpha);
+          ctx.save();
+          ctx.filter = "blur(" + Math.max(0.5, Number(point.blur || 58) * diameter / 3600) + "px)";
+          ctx.drawImage(layer, 0, 0);
+          ctx.restore();
+          return;
+        }
+        const gradient = ctx.createRadialGradient(pointX, pointY, 0, pointX, pointY, radius);
+        gradient.addColorStop(0, rgba(point.color, point.alpha));
+        gradient.addColorStop(0.62, rgba(point.color, point.alpha * 0.58));
+        gradient.addColorStop(1, rgba(point.color, 0));
+        ctx.fillStyle = gradient;
+        ctx.fillRect(centerX - diameter / 2, centerY + floatingY - diameter / 2, diameter, diameter);
+      });
+      ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = rgba(version.outline.color, version.outline.alpha);
+      ctx.lineWidth = Math.max(1, Number(version.outline.spread) * diameter / 300);
+      ctx.beginPath();
+      ctx.arc(centerX, centerY + floatingY, diameter / 2 - ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function escapeXml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function renderCssOrbFrame(diameter, phase) {
+      const shift = Number(controls.shift.value);
+      const floatAmount = Number(controls.float.value);
+      const floatingY = -Math.sin(phase) * floatAmount;
+      const glowMove = Number(controls.glowMove.value);
+      const glowX = Math.cos(phase) * glowMove;
+      const glowY = Math.sin(phase) * glowMove * 0.35;
+      const pulse = Number(controls.glowPulse.value);
+      const glowOpacity = Math.max(0.28, Math.min(1, 0.86 - pulse * (0.5 + Math.sin(phase) * 0.5)));
+      const shape = Number(controls.shape.value);
+      const shapeWave = Math.sin(phase) * shape * 0.35;
+      const borderRadius = (50 + shapeWave) + "% " + (50 - shapeWave) + "% " + (50 + shapeWave * 0.55) + "% " + (50 - shapeWave * 0.55) + "%";
+      const sphereBackground = buildBackground(phase, shift);
+      const sphereBackgroundSize = buildBackgroundSize();
+      const glowColor = rgba(version.glow.color, version.glow.alpha);
+      const markup =
+        '<div xmlns="http://www.w3.org/1999/xhtml" style="position:relative;width:500px;height:500px;overflow:visible;">' +
+          '<div style="position:absolute;left:' + (250 + glowX) + 'px;top:' + (250 + glowY) + 'px;width:' + (300 * Number(version.glow.size) / 100) + 'px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 36% 32%,rgba(255,255,255,.34),transparent 38%),conic-gradient(from ' + (phase * 180 / Math.PI) + 'deg,' + glowColor + ',transparent 28%,' + glowColor + ' 56%,transparent 78%,' + glowColor + ');filter:blur(' + version.glow.blur + 'px) saturate(1.28);transform:translate(-50%,-50%);opacity:' + glowOpacity + ';"></div>' +
+          '<div style="position:absolute;left:100px;top:' + (100 + floatingY) + 'px;width:300px;height:300px;border-radius:' + borderRadius + ';background-color:' + rgba(version.base.color, version.base.alpha) + ';background-image:' + escapeXml(sphereBackground) + ';background-size:' + escapeXml(sphereBackgroundSize) + ';background-position:center;background-repeat:no-repeat;box-shadow:' + escapeXml(shadows.large.join(", ")) + ';"></div>' +
+        '</div>';
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500"><foreignObject width="500" height="500">' + markup + '</foreignObject></svg>';
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+      });
+    }
+    function supportedVideoType() {
+      const types = [
+        "video/mp4;codecs=avc1.42E01E",
+        "video/mp4;codecs=h264",
+        "video/mp4",
+        "video/webm;codecs=vp9",
+        "video/webm"
+      ];
+      return types.find(type => window.MediaRecorder && MediaRecorder.isTypeSupported(type)) || "";
+    }
+    async function drawCompleteSceneFrame(targetCtx, dimensions, phase) {
+      const frameCanvas = document.createElement("canvas");
+      frameCanvas.width = dimensions.width;
+      frameCanvas.height = dimensions.height;
+      const frameCtx = frameCanvas.getContext("2d");
+      drawImageCover(frameCtx, backgroundImage, frameCanvas.width, frameCanvas.height);
+      const diameter = Math.min(frameCanvas.width, frameCanvas.height) * Number(orbSize.value) / 100;
+      const centerX = frameCanvas.width * Number(orbX.value) / 100;
+      const centerY = frameCanvas.height * Number(orbY.value) / 100;
+      try {
+        const orbImage = await renderCssOrbFrame(diameter, phase);
+        const renderedSize = diameter * (500 / 300);
+        frameCtx.drawImage(
+          orbImage,
+          centerX - renderedSize / 2,
+          centerY - renderedSize / 2,
+          renderedSize,
+          renderedSize
+        );
+      } catch (error) {
+        drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase);
+      }
+      targetCtx.clearRect(0, 0, dimensions.width, dimensions.height);
+      targetCtx.drawImage(frameCanvas, 0, 0);
+    }
+    async function exportScenePng() {
+      const dimensions = frameDimensions();
+      const canvas = document.createElement("canvas");
+      canvas.width = dimensions.width;
+      canvas.height = dimensions.height;
+      const ctx = canvas.getContext("2d");
+      const duration = Math.max(0.1, Number(controls.speed.value)) * 1000;
+      const phase = ((performance.now() - animationStart) / duration) * Math.PI * 2;
+      savePngBtn.disabled = true;
+      await drawCompleteSceneFrame(ctx, dimensions, phase);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          savePngBtn.disabled = false;
+          return;
+        }
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "orb-scene.png";
+        document.body.append(link);
+        link.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(link.href);
+          link.remove();
+        }, 2000);
+        savePngBtn.disabled = false;
+      }, "image/png");
+    }
+    async function recordScene() {
+      if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+        videoNote.textContent = fallbackText;
+        return;
+      }
+      saveVideoBtn.disabled = true;
+      saveVideoBtn.textContent = recordingText;
+      videoNote.textContent = "";
+      const dimensions = frameDimensions();
+      const canvas = document.createElement("canvas");
+      canvas.width = dimensions.width;
+      canvas.height = dimensions.height;
+      const ctx = canvas.getContext("2d");
+      const mimeType = supportedVideoType();
+      const stream = canvas.captureStream(30);
+      let recorder;
+      try {
+        recorder = mimeType
+          ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 })
+          : new MediaRecorder(stream);
+      } catch (error) {
+        recorder = new MediaRecorder(stream);
+      }
+      const chunks = [];
+      recorder.ondataavailable = event => {
+        if (event.data && event.data.size) chunks.push(event.data);
+      };
+      const duration = Number(videoDuration.value) * 1000;
+      await drawCompleteSceneFrame(ctx, dimensions, 0);
+      const startedAt = performance.now();
+      const finished = new Promise(resolve => recorder.addEventListener("stop", resolve, { once: true }));
+      recorder.start(250);
+      let drawingFrame = false;
+      async function drawFrame(now) {
+        if (drawingFrame) {
+          requestAnimationFrame(drawFrame);
+          return;
+        }
+        drawingFrame = true;
+        const elapsed = now - startedAt;
+        const phase = (elapsed / (Math.max(0.1, Number(controls.speed.value)) * 1000)) * Math.PI * 2;
+        await drawCompleteSceneFrame(ctx, dimensions, phase);
+        drawingFrame = false;
+        if (elapsed < duration) requestAnimationFrame(drawFrame);
+        else recorder.stop();
+      }
+      requestAnimationFrame(drawFrame);
+      await finished;
+      const actualType = recorder.mimeType || mimeType || "video/webm";
+      const extension = actualType.includes("mp4") ? "mp4" : "webm";
+      const blob = new Blob(chunks, { type: actualType });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "orb-animation." + extension;
+      document.body.append(link);
+      link.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(link.href);
+        link.remove();
+      }, 2000);
+      if (extension !== "mp4") videoNote.textContent = fallbackText;
+      saveVideoBtn.disabled = false;
+      saveVideoBtn.textContent = saveVideoText;
+    }
+    function apply() {
+      const speed = controls.speed.value + "s";
+      const shift = Number(controls.shift.value);
+      const shape = Number(controls.shape.value);
+      const pulse = Number(controls.glowPulse.value);
+      const turn = Number(controls.rotation.value);
+      const axis = Math.min(0.08, turn / 1800);
+      wrap.style.setProperty("--glow-color", rgba(version.glow.color, version.glow.alpha));
+      wrap.style.setProperty("--glow-blur", version.glow.blur + "px");
+      wrap.style.setProperty("--glow-size", version.glow.size + "%");
+      wrap.style.setProperty("--glow-x", version.glow.x + "%");
+      wrap.style.setProperty("--glow-y", version.glow.y + "%");
+      wrap.style.setProperty("--glow-move", controls.glowMove.value + "px");
+      wrap.style.setProperty("--glow-back", (-Number(controls.glowMove.value) / 2) + "px");
+      wrap.style.setProperty("--glow-rise", (-Number(controls.glowMove.value) / 3) + "px");
+      wrap.style.setProperty("--glow-high", Math.min(1, 0.78 + version.glow.alpha).toFixed(2));
+      wrap.style.setProperty("--glow-low", Math.max(0.28, 0.86 - pulse).toFixed(2));
+      wrap.style.setProperty("--glow-hue", Math.round(10 + pulse * 80) + "deg");
+      wrap.style.setProperty("--glow-spin", controls.glowSpin.value + "s");
+      sphere.style.setProperty("--sphere-bg", buildBackground());
+      sphere.style.setProperty("--sphere-base", rgba(version.base.color, version.base.alpha));
+      sphere.style.setProperty("--sphere-shadow", shadows.large.join(", "));
+      sphere.style.setProperty("--speed", speed);
+      const centeredPosition = [...version.points.map(() => "50% 50%"), "50% 50%"].join(", ");
+      sphere.style.setProperty("--pos-a", centeredPosition);
+      sphere.style.setProperty("--pos-b", centeredPosition);
+      sphere.style.setProperty("--pos-c", centeredPosition);
+      sphere.style.setProperty("--size-a", buildBackgroundSize());
+      sphere.style.setProperty("--size-b", buildBackgroundSize());
+      sphere.style.setProperty("--size-c", buildBackgroundSize());
+      sphere.style.setProperty("--axis-x", (1 + axis).toFixed(3));
+      sphere.style.setProperty("--axis-y", (1 - axis).toFixed(3));
+      sphere.style.setProperty("--float", "-" + controls.float.value + "px");
+      sphere.style.setProperty("--float-half", "-" + (Number(controls.float.value) / 2) + "px");
+      sphere.style.setProperty("--shape-a", (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%");
+      sphere.style.setProperty("--shape-b", (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%");
+      sphere.style.setProperty("--shape-c", (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%");
+      Object.values(controls).forEach(syncRangeFill);
+      [orbSize, orbX, orbY, videoDuration].forEach(syncRangeFill);
+      applyColorTransition();
+      if (activeTab === "scene") fitSceneFrame();
+      code.value = activeTab === "color" ? buildColorCode() : buildCode();
+    }
+    let animationStart = performance.now();
+    function tick(now) {
+      const duration = Math.max(0.1, Number(controls.speed.value)) * 1000;
+      const shift = Number(controls.shift.value);
+      const phase = ((now - animationStart) / duration) * Math.PI * 2;
+      sphere.style.setProperty("--sphere-bg", activeTab === "color" ? buildBackground() : buildBackground(phase, shift));
+      requestAnimationFrame(tick);
+    }
+    function buildColorCode() {
+      return ".hologram-sphere {\\n" +
+        "  position: relative;\\n" +
+        "  width: 300px;\\n" +
+        "  height: 300px;\\n" +
+        "  border-radius: 50%;\\n" +
+        "  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n" +
+        "  background-image: " + buildBackground() + ";\\n" +
+        "  background-size: " + buildBackgroundSize() + ";\\n" +
+        "  box-shadow: " + shadows.large.join(", ") + ";\\n" +
+        "}\\n\\n" +
+        ".hologram-sphere::after {\\n" +
+        "  content: \\"\\";\\n" +
+        "  position: absolute;\\n" +
+        "  inset: 0;\\n" +
+        "  border-radius: inherit;\\n" +
+        "  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n" +
+        "  background-image: " + buildBackground(0, 0, targetColors) + ";\\n" +
+        "  background-size: " + buildBackgroundSize() + ";\\n" +
+        "  background-position: center;\\n" +
+        "  background-repeat: no-repeat;\\n" +
+        "  animation: orb-color-flow " + colorSpeed.value + "s ease-in-out infinite;\\n" +
+        "}\\n\\n" +
+        "@keyframes orb-color-flow {\\n" +
+        "  0%, 100% { opacity: 0; }\\n" +
+        "  50% { opacity: " + colorOpacity.value + "; }\\n" +
+        "}";
+    }
+    function buildCode() {
+      const shift = Number(controls.shift.value);
+      const shape = Number(controls.shape.value);
+      const shapeA = (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%";
+      const shapeB = (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%";
+      const shapeC = (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%";
+      const turn = Number(controls.rotation.value);
+      const axis = Math.min(0.08, turn / 1800);
+      const axisX = (1 + axis).toFixed(3);
+      const axisY = (1 - axis).toFixed(3);
+      return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: 300px;\\n  height: 300px;\\n}\\n\\n" +
+        ".hologram-sphere-wrap::before {\\n  content: \\"\\";\\n  position: absolute;\\n  left: " + version.glow.x + "%;\\n  top: " + version.glow.y + "%;\\n  width: " + version.glow.size + "%;\\n  aspect-ratio: 1;\\n  border-radius: 50%;\\n  background: radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%), conic-gradient(from 0deg, " + rgba(version.glow.color, version.glow.alpha) + ", transparent 28%, " + rgba(version.glow.color, version.glow.alpha) + " 56%, transparent 78%, " + rgba(version.glow.color, version.glow.alpha) + ");\\n  filter: blur(" + version.glow.blur + "px) saturate(1.28);\\n  transform: translate(-50%, -50%);\\n  animation: glow-drift " + controls.glowSpin.value + "s linear infinite;\\n}\\n\\n" +
+        ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: 300px;\\n  height: 300px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite;\\n}\\n\\n" +
+        "@keyframes bubble-motion {\\n  0%, 100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n}\\n\\n" +
+        "@keyframes glow-drift {\\n  0% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(0deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n  50% { transform: translate(calc(-50% + " + controls.glowMove.value + "px), calc(-50% - " + (Number(controls.glowMove.value) / 3) + "px)) rotate(180deg); opacity: " + Math.max(0.28, 0.86 - Number(controls.glowPulse.value)).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.45) hue-rotate(" + Math.round(10 + Number(controls.glowPulse.value) * 80) + "deg); }\\n  100% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(360deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n}\\n";
+    }
+    Object.values(controls).forEach(input => input.addEventListener("input", apply));
+    [colorSpeed, colorOpacity].forEach(input => input.addEventListener("input", applyColorTransition));
+    [orbSize, orbX, orbY].forEach(input => input.addEventListener("input", () => {
+      syncRangeFill(input);
+      fitSceneFrame();
+    }));
+    videoDuration.addEventListener("input", () => syncRangeFill(videoDuration));
+    animationTab.addEventListener("click", () => setTab("animation"));
+    colorTab.addEventListener("click", () => setTab("color"));
+    sceneTab.addEventListener("click", () => setTab("scene"));
+    uploadBackgroundBtn.addEventListener("click", () => backgroundInput.click());
+    removeBackgroundBtn.addEventListener("click", () => {
+      if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+      backgroundUrl = "";
+      backgroundImage = null;
+      backgroundInput.value = "";
+      fitSceneFrame();
+    });
+    backgroundColor.addEventListener("input", () => {
+      if (activeTab === "scene") {
+        sceneBackgroundColor = backgroundColor.value;
+      }
+      sceneFrame.style.backgroundColor = backgroundColor.value;
+    });
+    backgroundInput.addEventListener("change", () => {
+      const file = backgroundInput.files && backgroundInput.files[0];
+      if (!file) return;
+      if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+      backgroundUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        backgroundImage = image;
+        fitSceneFrame();
+      };
+      image.src = backgroundUrl;
+    });
+    frameRatio.addEventListener("change", () => {
+      customSizeFields.classList.toggle("visible", frameRatio.value === "custom");
+      fitSceneFrame();
+    });
+    [frameWidth, frameHeight].forEach(input => input.addEventListener("input", fitSceneFrame));
+    savePngBtn.addEventListener("click", exportScenePng);
+    saveVideoBtn.addEventListener("click", recordScene);
+    window.addEventListener("resize", () => {
+      if (activeTab === "scene") fitSceneFrame();
+    });
+    renderColorControls();
+    apply();
+    setTab("animation");
+    requestAnimationFrame(tick);
+  <\/script>
+</body>
+</html>`;
+    }
+
+    function openAnimationWindow(version) {
+      const popup = window.open("", "_blank", "width=1180,height=760");
+      if (!popup) return;
+      popup.document.open();
+      popup.document.write(buildAnimationHtml(version));
+      popup.document.close();
+    }
+
+    function renderPoints() {
+      stage.querySelectorAll(".point").forEach(point => point.remove());
+      points.forEach(point => {
+        const marker = document.createElement("button");
+        marker.type = "button";
+        marker.className = `point${point.id === selectedId ? " selected" : ""}`;
+        marker.style.setProperty("--x", point.x);
+        marker.style.setProperty("--y", point.y);
+        marker.style.setProperty("--color", point.color);
+        marker.title = displayPointName(point);
+        marker.addEventListener("pointerdown", event => startDrag(event, point.id));
+        marker.addEventListener("click", () => select(point.id));
+        stage.append(marker);
+      });
+    }
+
+    function renderList() {
+      colorList.innerHTML = "";
+      const outlineCard = document.createElement("button");
+      outlineCard.type = "button";
+      outlineCard.className = `color-card${selectedId === "outline" ? " selected" : ""}`;
+      outlineCard.innerHTML = `
+        <span class="swatch" style="--color: ${outline.color}"></span>
+        <span>
+          <span class="card-title">${t("outlineName")}</span>
+          <span class="card-meta">${Math.round(outline.alpha * 100)}% / ${outline.blur}px / ${outline.spread}px</span>
+        </span>
+        <span></span>
+      `;
+      outlineCard.addEventListener("click", () => select("outline"));
+      colorList.append(outlineCard);
+
+      points.forEach((point, index) => {
+        const card = document.createElement("div");
+        card.className = `color-card${point.id === selectedId ? " selected" : ""}`;
+        card.tabIndex = 0;
+        card.draggable = true;
+        card.dataset.pointId = point.id;
+        card.setAttribute("role", "button");
+        card.innerHTML = `
+            <span class="swatch" style="--color: ${point.color}"></span>
+            <span>
+            <span class="card-title">${displayPointName(point)}</span>
+            <span class="card-meta">${point.x}% / ${point.y}% / ${Math.round(point.alpha * 100)}%</span>
+          </span>
+          <button class="delete-btn" type="button" data-layer-action="delete" title="${t("delete")}">×</button>
+        `;
+        card.addEventListener("click", event => {
+          const action = event.target.dataset.layerAction;
+          if (action) {
+            event.stopPropagation();
+            if (action === "delete") removePoint(point.id);
+          } else {
+            select(point.id);
+          }
+        });
+        card.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") select(point.id);
+        });
+        card.addEventListener("dragstart", event => {
+          draggedPointId = point.id;
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", point.id);
+          requestAnimationFrame(() => card.classList.add("dragging"));
+        });
+        card.addEventListener("dragover", event => {
+          if (!draggedPointId || draggedPointId === point.id) return;
+          event.preventDefault();
+          const after = event.clientY > card.getBoundingClientRect().top + card.offsetHeight / 2;
+          card.classList.toggle("drop-before", !after);
+          card.classList.toggle("drop-after", after);
+        });
+        card.addEventListener("dragleave", () => {
+          card.classList.remove("drop-before", "drop-after");
+        });
+        card.addEventListener("drop", event => {
+          event.preventDefault();
+          const after = event.clientY > card.getBoundingClientRect().top + card.offsetHeight / 2;
+          reorderPoint(draggedPointId, point.id, after);
+        });
+        card.addEventListener("dragend", () => {
+          draggedPointId = null;
+          colorList.querySelectorAll(".color-card").forEach(item => {
+            item.classList.remove("dragging", "drop-before", "drop-after");
+          });
+        });
+        colorList.append(card);
+      });
+    }
+
+    function renderFields() {
+      const isOutline = selectedId === "outline";
+      fieldLabels.name.textContent = t("name");
+      fieldLabels.color.textContent = t("color");
+      fieldLabels.x.textContent = isOutline ? t("blurPx") : t("xPercent");
+      fieldLabels.y.textContent = isOutline ? t("thicknessPx") : t("yPercent");
+      fieldLabels.alpha.textContent = isOutline ? t("transparency") : t("opacity");
+      fieldLabels.radius.textContent = !isOutline && points.find(item => item.id === selectedId)?.shape === "arc"
+        ? t("arcSize")
+        : t("spotSize");
+      fieldLabels.shape.textContent = t("pointType");
+      fieldLabels.angle.textContent = t("spotRotation");
+      fieldLabels.blur.textContent = t("spotBlur");
+      fields.radius.closest("label").style.display = isOutline ? "none" : "grid";
+      fields.shape.closest("label").style.display = isOutline ? "none" : "grid";
+      fields.angle.closest("label").style.display = isOutline ? "none" : "grid";
+      fields.blur.closest("label").style.display = isOutline ? "none" : "grid";
+      fields.x.min = isOutline ? "0" : "0";
+      fields.x.max = isOutline ? "30" : "100";
+      fields.x.step = isOutline ? "1" : "1";
+      fields.y.min = isOutline ? "0" : "0";
+      fields.y.max = isOutline ? "5" : "100";
+      fields.y.step = isOutline ? "0.1" : "1";
+
+      if (isOutline) {
+        fields.name.value = t("outlineName");
+        fields.color.value = outline.color;
+        fields.x.value = Math.round(outline.blur);
+        fields.y.value = outline.spread;
+        fields.alpha.value = outline.alpha;
+        fields.radius.value = 0;
+        fields.shape.value = "circle";
+        fields.angle.value = 0;
+        fields.blur.value = 58;
+      glowFields.color.value = glow.color;
+      glowFields.alpha.value = glow.alpha;
+      glowFields.blur.value = glow.blur;
+      glowFields.size.value = glow.size;
+      glowFields.x.value = glow.x;
+      glowFields.y.value = glow.y;
+      baseFields.color.value = base.color;
+      baseFields.alpha.value = base.alpha;
+      return;
+      }
+
+      const point = points.find(item => item.id === selectedId);
+      if (!point) return;
+      fields.name.value = displayPointName(point);
+      fields.color.value = point.color;
+      fields.x.value = Math.round(point.x);
+      fields.y.value = Math.round(point.y);
+      fields.alpha.value = point.alpha;
+      fields.radius.value = point.radius;
+      fields.shape.value = point.shape === "arc" ? "arc" : "circle";
+      fields.angle.value = Number(point.angle || 0);
+      fields.blur.value = Number(point.blur ?? 58);
+      glowFields.color.value = glow.color;
+      glowFields.alpha.value = glow.alpha;
+      glowFields.blur.value = glow.blur;
+      glowFields.size.value = glow.size;
+      glowFields.x.value = glow.x;
+      glowFields.y.value = glow.y;
+      baseFields.color.value = base.color;
+      baseFields.alpha.value = base.alpha;
+    }
+
+    function applySphere() {
+      sphere.style.setProperty("--sphere-bg", buildBackground());
+      sphere.style.setProperty("--sphere-base", rgba(base.color, base.alpha));
+      sphere.style.setProperty("--sphere-bg-size", buildBackgroundSize());
+      sphere.style.setProperty("--sphere-bg-position", buildPosition(0));
+      sphere.style.setProperty("--sphere-shadow", buildShadow("large").join(", "));
+      sphereWrap.style.setProperty("--glow-color", rgba(glow.color, glow.alpha));
+      sphereWrap.style.setProperty("--glow-blur", `${glow.blur}px`);
+      sphereWrap.style.setProperty("--glow-size", `${glow.size}%`);
+      sphereWrap.style.setProperty("--glow-x", `${glow.x}%`);
+      sphereWrap.style.setProperty("--glow-y", `${glow.y}%`);
+      document.documentElement.style.setProperty("--pos-a", buildPosition(0));
+      document.documentElement.style.setProperty("--pos-b", buildPosition(5));
+      document.documentElement.style.setProperty("--pos-c", buildPosition(2));
+      const css = buildCss(cssSize);
+      cssOutput.value = css;
+      renderCssCode(css);
+    }
+
+    function syncRangeFills() {
+      document.querySelectorAll('input[type="range"]').forEach(input => {
+        const min = Number(input.min || 0);
+        const max = Number(input.max || 100);
+        const fill = max === min ? 0 : ((Number(input.value) - min) / (max - min)) * 100;
+        input.style.setProperty("--range-fill", `${Math.max(0, Math.min(100, fill))}%`);
+      });
+    }
+
+    function render() {
+      renderPoints();
+      renderList();
+      renderVersions();
+      renderFields();
+      applySphere();
+      syncRangeFills();
+    }
+
+    function select(id) {
+      selectedId = id;
+      render();
+    }
+
+    function updateSelected(patch) {
+      if (selectedId === "outline") {
+        updateOutline(patch);
+        return;
+      }
+      points = points.map(point => point.id === selectedId ? { ...point, ...patch } : point);
+      render();
+    }
+
+    function updateGlow(patch) {
+      glow = { ...glow, ...patch };
+      render();
+    }
+
+    function updateOutline(patch) {
+      outline = { ...outline, ...patch };
+      render();
+    }
+
+    function removePoint(id) {
+      if (points.length <= 1) return;
+      points = points.filter(point => point.id !== id);
+      selectedId = points[0].id;
+      render();
+    }
+
+    function reorderPoint(draggedId, targetId, after) {
+      if (!draggedId || draggedId === targetId) return;
+      const reordered = [...points];
+      const sourceIndex = reordered.findIndex(point => point.id === draggedId);
+      if (sourceIndex < 0) return;
+      const [point] = reordered.splice(sourceIndex, 1);
+      let targetIndex = reordered.findIndex(item => item.id === targetId);
+      if (targetIndex < 0) return;
+      if (after) targetIndex += 1;
+      reordered.splice(targetIndex, 0, point);
+      points = reordered;
+      selectedId = draggedId;
+      draggedPointId = null;
+      render();
+    }
+
+    function startDrag(event, id) {
+      if (id === "outline") return;
+      event.preventDefault();
+      select(id);
+      const move = pointerEvent => {
+        const box = stage.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((pointerEvent.clientX - box.left) / box.width) * 100));
+        const y = Math.max(0, Math.min(100, ((pointerEvent.clientY - box.top) / box.height) * 100));
+        updateSelected({ x: Math.round(x), y: Math.round(y) });
+      };
+      const stop = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", stop);
+    }
+
+    Object.entries(fields).forEach(([key, input]) => {
+      input.addEventListener("input", () => {
+        if (selectedId === "outline") {
+          if (key === "name" || key === "radius" || key === "shape" || key === "angle" || key === "blur") return;
+          if (key === "color") updateOutline({ color: input.value });
+          if (key === "alpha") updateOutline({ alpha: Number(input.value) });
+          if (key === "x") updateOutline({ blur: Number(input.value) });
+          if (key === "y") updateOutline({ spread: Number(input.value) });
+          return;
+        }
+        const value = key === "x" || key === "y" || key === "radius" || key === "angle" || key === "blur"
+          ? Number(input.value)
+          : key === "alpha"
+            ? Number(input.value)
+            : input.value;
+        updateSelected({ [key]: value });
+      });
+    });
+
+    Object.entries(glowFields).forEach(([key, input]) => {
+      input.addEventListener("input", () => {
+        const value = key === "color" ? input.value : Number(input.value);
+        updateGlow({ [key]: value });
+      });
+    });
+
+    Object.entries(baseFields).forEach(([key, input]) => {
+      input.addEventListener("input", () => {
+        const value = key === "color" ? input.value : Number(input.value);
+        base = { ...base, [key]: value };
+        render();
+      });
+    });
+
+    document.getElementById("addBtn").addEventListener("click", () => {
+      const id = `point${Date.now()}`;
+      points.push({ id, name: t("newPoint"), x: 50, y: 50, color: "#b9d7ff", alpha: 0.5, radius: 50, shape: "circle", angle: 0, blur: 58 });
+      selectedId = id;
+      render();
+    });
+
+    document.getElementById("addHighlightBtn").addEventListener("click", () => {
+      const id = `highlight${Date.now()}`;
+      points.push({
+        id,
+        name: currentLang === "ru" ? "Перламутровая дуга" : "Pearl arc",
+        nameEn: "Pearl arc",
+        x: 58,
+        y: 12,
+        color: "#fff3fb",
+        alpha: 0.9,
+        radius: 58,
+        shape: "arc",
+        angle: 12,
+        blur: 62
+      });
+      selectedId = id;
+      render();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      points = clone(defaults);
+      glow = { ...defaultGlow };
+      base = { ...defaultBase };
+      outline = { ...defaultOutline };
+      selectedId = points[0].id;
+      render();
+    });
+
+    document.getElementById("exportProjectBtn").addEventListener("click", event => {
+      event.preventDefault();
+      downloadProject();
+    });
+
+    document.getElementById("loadProjectBtn").addEventListener("click", () => {
+      projectFileInput.click();
+    });
+
+    projectFileInput.addEventListener("change", () => {
+      const file = projectFileInput.files && projectFileInput.files[0];
+      if (file) importProjectFile(file);
+    });
+
+    document.getElementById("saveVersionBtn").addEventListener("click", saveCurrentVersion);
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(cssOutput.value);
+    });
+
+    document.getElementById("smallBtn").addEventListener("click", () => {
+      cssSize = cssSize === "small" ? "large" : "small";
+      document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
+      const css = buildCss(cssSize);
+      cssOutput.value = css;
+      renderCssCode(css);
+    });
+
+    document.getElementById("langToggle").addEventListener("click", () => {
+      currentLang = currentLang === "ru" ? "en" : "ru";
+      applyLanguage();
+      renderFields();
+      const css = buildCss(cssSize);
+      cssOutput.value = css;
+      renderCssCode(css);
+    });
+
+    render();
+    applyLanguage();
+  </script>
+</body>
+</html>
