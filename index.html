@@ -2553,9 +2553,12 @@
           ctx.restore();
           return;
         }
+        const softness = Number(point.blur ?? 58);
+        const core = Math.max(0, Math.round(point.radius * (0.58 - softness * 0.0048)));
+        const mid = Math.max(core + 1, Math.round(point.radius * (0.72 + softness * 0.0015)));
         const gradient = ctx.createRadialGradient(pointX, pointY, 0, pointX, pointY, radius);
-        gradient.addColorStop(0, rgba(point.color, point.alpha));
-        gradient.addColorStop(0.62, rgba(point.color, point.alpha * 0.58));
+        gradient.addColorStop(Math.min(0.98, core / Math.max(1, Number(point.radius))), rgba(point.color, point.alpha));
+        gradient.addColorStop(Math.min(0.99, mid / Math.max(1, Number(point.radius))), rgba(point.color, point.alpha * 0.58));
         gradient.addColorStop(1, rgba(point.color, 0));
         ctx.fillStyle = gradient;
         ctx.fillRect(centerX - diameter / 2, centerY + floatingY - diameter / 2, diameter, diameter);
@@ -2623,19 +2626,8 @@
       const diameter = Math.min(frameCanvas.width, frameCanvas.height) * Number(orbSize.value) / 100;
       const centerX = frameCanvas.width * Number(orbX.value) / 100;
       const centerY = frameCanvas.height * Number(orbY.value) / 100;
-      try {
-        const orbImage = await renderCssOrbFrame(diameter, phase);
-        const renderedSize = diameter * (500 / 300);
-        frameCtx.drawImage(
-          orbImage,
-          centerX - renderedSize / 2,
-          centerY - renderedSize / 2,
-          renderedSize,
-          renderedSize
-        );
-      } catch (error) {
-        drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase);
-      }
+      // Canvas rendering avoids Safari foreignObject artifacts in PNG and video exports.
+      drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase);
       targetCtx.clearRect(0, 0, dimensions.width, dimensions.height);
       targetCtx.drawImage(frameCanvas, 0, 0);
     }
