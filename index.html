@@ -7,15 +7,15 @@
   <style>
     :root {
       color-scheme: light;
-      --ink: #101114;
+      --ink: #202020;
       --muted: #757985;
       --line: #ececf0;
       --panel: #fff;
       --soft: #f7f7f8;
       --soft-strong: #f1f1f3;
-      --accent: #15161a;
-      --accent-soft: rgba(21, 22, 26, 0.12);
-      --accent-shadow: rgba(21, 22, 26, 0.18);
+      --accent: #202020;
+      --accent-soft: rgba(32, 32, 32, 0.12);
+      --accent-shadow: rgba(32, 32, 32, 0.18);
       --sphere-bg: none;
       --sphere-bg-size: 100% 100%;
       --sphere-bg-position: 50% 50%;
@@ -33,6 +33,69 @@
     }
 
     * { box-sizing: border-box; }
+
+    .intro-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      animation: intro-splash 3.4s ease forwards;
+    }
+
+    .intro-splash-copy {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: intro-copy 2.8s ease forwards;
+    }
+
+    .intro-splash-title {
+      margin: 0;
+      color: #202020;
+      font-size: clamp(38px, 5vw, 64px);
+      line-height: 1;
+      font-weight: 780;
+      letter-spacing: 0;
+    }
+
+    .intro-splash-gradient {
+      color: transparent;
+      background:
+        linear-gradient(100deg, #202020 0%, #7585ff 38%, #a66cff 62%, #202020 100%);
+      background-size: 220% 100%;
+      background-position: 100% 50%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: intro-gradient 2.4s ease-in-out forwards;
+    }
+
+    .intro-splash-subtitle {
+      margin: 0;
+      color: #c5c5c8;
+      font-size: clamp(14px, 1.6vw, 19px);
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    @keyframes intro-copy {
+      0%, 10% { opacity: 0; transform: translateY(8px); }
+      30%, 72% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-5px); }
+    }
+
+    @keyframes intro-gradient {
+      0% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes intro-splash {
+      0%, 76% { opacity: 1; visibility: visible; }
+      100% { opacity: 0; visibility: hidden; pointer-events: none; }
+    }
 
     body {
       min-height: 100vh;
@@ -247,7 +310,7 @@
       overflow: auto;
       border-radius: 14px;
       background: #fff;
-      color: #101114;
+      color: #202020;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -480,7 +543,7 @@
       border: 1px solid transparent;
       border-radius: 50%;
       background: transparent;
-      color: #22242a;
+      color: #202020;
       cursor: pointer;
       font-size: 18px;
       font-weight: 700;
@@ -645,6 +708,52 @@
       white-space: nowrap;
     }
 
+    button {
+      transform-origin: center;
+      transition:
+        transform 160ms ease,
+        filter 160ms ease,
+        background-color 160ms ease,
+        color 160ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.06);
+      transform: scale(1.018);
+    }
+
+    button:active {
+      transform: scale(0.985);
+    }
+
+    .action-btn:not(.primary):hover,
+    .delete-btn:hover {
+      background-color: #fff;
+    }
+
+    .action-btn.primary:hover {
+      background-color: #303030;
+    }
+
+    .color-card:hover {
+      transform: scale(1.006);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .intro-splash {
+        animation-duration: 1.2s;
+      }
+      .intro-splash-copy {
+        animation-duration: 1s;
+      }
+      .intro-splash-gradient {
+        animation: none;
+      }
+      button {
+        transition: none;
+      }
+    }
+
     .action-btn.primary {
       border-color: var(--accent);
       background: var(--accent);
@@ -791,6 +900,12 @@
   </style>
 </head>
 <body>
+  <div class="intro-splash" id="introSplash" aria-hidden="true">
+    <div class="intro-splash-copy">
+      <p class="intro-splash-title">Orb <span class="intro-splash-gradient">editor</span></p>
+      <p class="intro-splash-subtitle">Create a colour animation<br>in code</p>
+    </div>
+  </div>
   <main class="app">
     <section class="canvas-panel">
       <div class="panel-head">
@@ -1531,6 +1646,30 @@
   <title>${t("animationTitle")}</title>
   <style>
     * { box-sizing: border-box; }
+    button {
+      transform-origin: center;
+      transition:
+        transform 160ms ease,
+        filter 160ms ease,
+        background-color 160ms ease,
+        color 160ms ease;
+    }
+    button:hover {
+      filter: brightness(1.06);
+      transform: scale(1.018);
+    }
+    button:active {
+      transform: scale(0.985);
+    }
+    .scene-btn:not(.primary):hover,
+    .tab-btn:hover,
+    .close-btn:hover,
+    .color-reset-btn:hover {
+      background-color: #fff;
+    }
+    .scene-btn.primary:hover {
+      background-color: #303030;
+    }
     body {
       display: grid;
       grid-template-columns: minmax(620px, 1fr) minmax(340px, 420px);
@@ -1540,7 +1679,7 @@
       padding: 16px;
       overflow: hidden;
       background: #fbfbfc;
-      color: #101114;
+      color: #202020;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .workspace, .panel {
@@ -1693,7 +1832,7 @@
     }
     .tab-btn.active {
       background: #fff;
-      color: #101114;
+      color: #202020;
     }
     .tab-content {
       display: none;
@@ -1727,7 +1866,7 @@
       padding: 7px 10px;
       border-radius: 14px;
       background: #f7f7f8;
-      color: #101114;
+      color: #202020;
       font-size: 12px;
       font-weight: 750;
     }
@@ -1763,7 +1902,7 @@
       border: 0;
       border-radius: 50%;
       background: #ededf0;
-      color: #15161a;
+      color: #202020;
       cursor: pointer;
       font: 700 18px/1 Inter, ui-sans-serif, system-ui, sans-serif;
     }
@@ -1786,7 +1925,7 @@
       border: 0;
       border-radius: 14px;
       background: #f3f3f5;
-      color: #101114;
+      color: #202020;
       font: 750 13px/1 Inter, ui-sans-serif, system-ui, sans-serif;
     }
     .scene-btn {
@@ -1794,7 +1933,7 @@
       cursor: pointer;
     }
     .scene-btn.primary {
-      background: #15161a;
+      background: #202020;
       color: #fff;
     }
     .scene-btn:disabled {
@@ -1831,7 +1970,7 @@
       border: 0;
       border-radius: 50%;
       background: #f7f7f8;
-      color: #101114;
+      color: #202020;
       cursor: pointer;
       font: 24px/1 Inter, ui-sans-serif, system-ui, sans-serif;
     }
@@ -1874,7 +2013,11 @@
       height: 8px;
       border: 0;
       border-radius: 999px;
-      background: transparent;
+      background: linear-gradient(
+        to right,
+        #202020 0 var(--range-fill, 50%),
+        #e4e4e7 var(--range-fill, 50%) 100%
+      );
       box-shadow: none;
     }
     input[type="range"]::-webkit-slider-thumb {
@@ -1896,7 +2039,7 @@
     input[type="range"]::-moz-range-progress {
       height: 8px;
       border-radius: 999px;
-      background: #15161a;
+      background: #202020;
     }
     input[type="range"]::-moz-range-thumb {
       width: 22px;
@@ -2181,7 +2324,7 @@
       const fill = max === min ? 0 : ((Number(input.value) - min) / (max - min)) * 100;
       const clampedFill = Math.max(0, Math.min(100, fill));
       input.style.setProperty("--range-fill", clampedFill + "%");
-      input.style.background = "linear-gradient(to right, #15161a 0 " + clampedFill + "%, #e4e4e7 " + clampedFill + "% 100%) center / 100% 8px no-repeat";
+      input.style.background = "transparent";
     }
     function pointName(point) {
       return document.documentElement.lang === "en" ? (point.nameEn || point.name) : point.name;
