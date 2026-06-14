@@ -428,6 +428,22 @@
       font-weight: 800;
     }
 
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-heading .section-title {
+      margin-bottom: 14px;
+    }
+
+    .mobile-sheet-close,
+    .mobile-settings-tabs {
+      display: none;
+    }
+
     .color-list {
       display: grid;
       grid-auto-rows: 54px;
@@ -918,33 +934,307 @@
     }
 
     @media (max-width: 560px) {
+      body {
+        background: #f4f4f6;
+      }
+
       .app {
-        width: min(calc(100% - 16px), 420px);
-        padding: 8px 0;
+        display: block;
+        width: 100%;
+        padding: 0 8px 18px;
       }
-      .panel-head {
-        align-items: flex-start;
-        padding: 18px 18px 8px;
+
+      .canvas-panel {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-rows: auto auto;
+        min-height: 0;
+        padding-bottom: 8px;
+        border-radius: 0 0 24px 24px;
+        box-shadow: 0 12px 30px rgba(32, 32, 32, 0.08);
       }
+
+      .canvas-panel .panel-head {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        min-height: 74px;
+        padding: 12px 12px 8px;
+      }
+
+      .canvas-panel .panel-head > div:first-child {
+        align-self: end;
+      }
+
+      .canvas-panel h1 {
+        font-size: 20px;
+      }
+
+      .canvas-panel .hint {
+        display: none;
+      }
+
+      .canvas-panel .top-actions {
+        order: initial;
+        width: auto;
+        align-self: start;
+        justify-content: flex-end;
+      }
+
+      .canvas-panel .top-actions .action-btn {
+        min-width: 0;
+        height: 36px;
+        min-height: 36px;
+        padding: 0 10px;
+        font-size: 11px;
+      }
+
+      .project-actions {
+        gap: 4px;
+      }
+
+      .stage-wrap {
+        padding: 4px 12px 10px;
+      }
+
       .stage {
-        width: min(344px, calc(100vw - 72px));
-        height: min(344px, calc(100vw - 72px));
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        border-radius: 20px;
       }
+
       .sphere-wrap,
       .sphere {
-        width: min(286px, calc(100vw - 112px));
-        height: min(286px, calc(100vw - 112px));
+        width: min(136px, 36vw);
+        height: min(136px, 36vw);
       }
-      .controls,
+
+      .point {
+        width: 15px;
+        height: 15px;
+      }
+
       .canvas-code {
-        margin-left: 18px;
-        margin-right: 18px;
+        display: none;
       }
+
+      .controls-panel {
+        margin-top: 8px;
+        border-radius: 24px;
+        overflow: visible;
+        box-shadow: none;
+      }
+
+      .controls-panel > .panel-head {
+        min-height: 58px;
+        padding: 14px 14px 6px;
+      }
+
+      .controls-panel h2 {
+        font-size: 19px;
+      }
+
+      .settings-actions {
+        gap: 6px;
+      }
+
+      .settings-actions .action-btn {
+        height: 36px;
+        min-height: 36px;
+        padding: 0 10px;
+        font-size: 11px;
+      }
+
+      .mobile-settings-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin: 6px 14px 0;
+        padding: 5px;
+        border-radius: 18px;
+        background: var(--soft);
+      }
+
+      .mobile-tab-btn {
+        min-height: 42px;
+        border: 0;
+        border-radius: 14px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      .mobile-tab-btn.secondary {
+        background: #e9e9ec;
+      }
+
       .controls {
-        padding: 18px;
+        display: block;
+        margin: 0;
+        padding: 10px 14px 14px;
       }
-      .field-grid {
+
+      .controls .section {
+        min-height: 0 !important;
+        margin-bottom: 10px;
+        padding: 14px;
+        border-radius: 20px;
+      }
+
+      .color-section {
+        height: 156px !important;
+      }
+
+      .color-section .section-title {
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+
+      .color-list {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-rows: 52px;
+        gap: 8px;
+        height: 108px;
+        padding: 0 3px 4px 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-snap-type: y proximity;
+      }
+
+      .color-card {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 52px;
+        min-height: 52px;
+        padding: 0;
+        border-radius: 17px;
+        cursor: pointer;
+        touch-action: pan-y;
+        transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+        scroll-snap-align: start;
+      }
+
+      .color-card > span:not(.swatch),
+      .color-card .delete-btn {
+        display: none;
+      }
+
+      .color-card .swatch {
+        width: 34px;
+        height: 34px;
+        border-width: 0;
+        box-shadow: 0 0 0 1px rgba(32, 32, 32, 0.08);
+      }
+
+      .color-card.selected {
+        background: #fff;
+      }
+
+      .color-card.selected .swatch {
+        box-shadow: 0 0 0 3px #fff, 0 0 0 5px #202020;
+      }
+
+      .color-card.swipe-removing {
+        opacity: 0;
+      }
+
+      .point-section,
+      .glow-section {
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        top: clamp(292px, 40dvh, 340px);
+        bottom: 8px;
+        z-index: 70;
+        display: block;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 16px 14px calc(18px + env(safe-area-inset-bottom)) !important;
+        overflow-y: auto;
+        border: 1px solid rgba(32, 32, 32, 0.06);
+        border-radius: 24px 24px 18px 18px !important;
+        background: #f7f7f8;
+        box-shadow: 0 -14px 36px rgba(32, 32, 32, 0.14);
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(24px);
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+      }
+
+      .point-section.mobile-open,
+      .glow-section.mobile-open {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .section-heading {
+        position: sticky;
+        top: -16px;
+        z-index: 2;
+        margin: -2px -2px 8px;
+        padding: 2px 2px 8px;
+        background: #f7f7f8;
+      }
+
+      .section-heading .section-title {
+        margin: 0;
+      }
+
+      .mobile-sheet-close {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 50%;
+        background: #e9e9ec;
+        color: var(--ink);
+        font-size: 23px;
+        line-height: 1;
+      }
+
+      .point-section .field-grid,
+      .glow-section .field-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 13px 10px;
+      }
+
+      .point-section label,
+      .glow-section label {
+        font-size: 12px;
+      }
+
+      .point-section input,
+      .point-section select,
+      .glow-section input,
+      .glow-section select {
+        min-height: 42px;
+      }
+
+      .versions-section {
+        min-height: 220px !important;
+      }
+
+      .footer {
         grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 0 14px 14px;
+      }
+
+      .footer .action-btn {
+        height: 46px;
+        min-height: 46px;
       }
     }
   </style>
@@ -1001,14 +1291,22 @@
         </div>
       </div>
 
+      <nav class="mobile-settings-tabs" aria-label="Мобильные настройки">
+        <button class="mobile-tab-btn" id="mobileColorsBtn" type="button" data-i18n="colorPoints">Цветовые точки</button>
+        <button class="mobile-tab-btn secondary" id="mobileGlowBtn" type="button" data-i18n="glowSection">Подложка и подсветка</button>
+      </nav>
+
       <div class="controls">
-        <section class="section">
+        <section class="section color-section">
           <p class="section-title" data-i18n="colorPoints">Цветовые точки</p>
           <div class="color-list" id="colorList"></div>
         </section>
 
-        <section class="section">
-          <p class="section-title" data-i18n="selectedPoint">Выбранная точка</p>
+        <section class="section point-section" id="pointSection">
+          <div class="section-heading">
+            <p class="section-title" data-i18n="selectedPoint">Выбранная точка</p>
+            <button class="mobile-sheet-close" type="button" data-mobile-close aria-label="Закрыть">×</button>
+          </div>
           <div class="field-grid">
             <label><span data-i18n="name">Название</span> <input id="nameInput" type="text"></label>
             <label><span data-i18n="color">Цвет</span> <input id="colorInput" type="color"></label>
@@ -1027,8 +1325,11 @@
           </div>
         </section>
 
-        <section class="section">
-          <p class="section-title" data-i18n="glowSection">Подложка и подсветка</p>
+        <section class="section glow-section" id="glowSection">
+          <div class="section-heading">
+            <p class="section-title" data-i18n="glowSection">Подложка и подсветка</p>
+            <button class="mobile-sheet-close" type="button" data-mobile-close aria-label="Закрыть">×</button>
+          </div>
           <div class="field-grid">
             <label><span data-i18n="baseColor">Цвет подложки</span> <input id="baseColorInput" type="color"></label>
             <label><span data-i18n="baseOpacity">Прозрачность подложки</span> <input id="baseAlphaInput" type="range" min="0" max="1" step="0.01"></label>
@@ -1041,7 +1342,7 @@
           </div>
         </section>
 
-        <section class="section">
+        <section class="section versions-section">
           <p class="section-title" data-i18n="versionHistory">История версий</p>
           <button class="action-btn primary" id="saveVersionBtn" type="button" data-i18n="saveCurrent">Сохранить текущую версию</button>
           <div class="version-list" id="versionList"></div>
@@ -1280,6 +1581,9 @@
       color: document.getElementById("baseColorInput"),
       alpha: document.getElementById("baseAlphaInput")
     };
+    const pointSection = document.getElementById("pointSection");
+    const glowSection = document.getElementById("glowSection");
+    const mobileQuery = window.matchMedia("(max-width: 560px)");
     const fieldLabels = {};
     Object.entries(fields).forEach(([key, input]) => {
       fieldLabels[key] = input.closest("label").querySelector("span");
@@ -2916,9 +3220,11 @@
         marker.style.setProperty("--y", point.y);
         marker.style.setProperty("--color", point.color);
         marker.title = displayPointName(point);
-        marker.addEventListener("pointerdown", event => startDrag(event, point.id));
+        marker.addEventListener("pointerdown", event => {
+          if (!mobileQuery.matches) startDrag(event, point.id);
+        });
         marker.addEventListener("click", () => select(point.id));
-        stage.append(marker);
+        (mobileQuery.matches ? sphereWrap : stage).append(marker);
       });
     }
 
@@ -2936,6 +3242,7 @@
         <span></span>
       `;
       outlineCard.addEventListener("click", () => select("outline"));
+      outlineCard.classList.add("is-outline");
       colorList.append(outlineCard);
 
       points.forEach((point, index) => {
@@ -2954,6 +3261,11 @@
           <button class="delete-btn" type="button" data-layer-action="delete" title="${t("delete")}">×</button>
         `;
         card.addEventListener("click", event => {
+          if (card.dataset.ignoreClick === "1") {
+            card.dataset.ignoreClick = "0";
+            event.preventDefault();
+            return;
+          }
           const action = event.target.dataset.layerAction;
           if (action) {
             event.stopPropagation();
@@ -2992,8 +3304,59 @@
             item.classList.remove("dragging", "drop-before", "drop-after");
           });
         });
+        addMobileSwipeDelete(card, point.id);
         colorList.append(card);
       });
+    }
+
+    function addMobileSwipeDelete(card, pointId) {
+      let startX = 0;
+      let deltaX = 0;
+      let tracking = false;
+
+      card.addEventListener("pointerdown", event => {
+        if (!mobileQuery.matches || event.pointerType === "mouse") return;
+        startX = event.clientX;
+        deltaX = 0;
+        tracking = true;
+        card.setPointerCapture?.(event.pointerId);
+      });
+
+      card.addEventListener("pointermove", event => {
+        if (!tracking) return;
+        deltaX = event.clientX - startX;
+        if (Math.abs(deltaX) < 7) return;
+        card.style.transform = `translateX(${Math.max(-84, Math.min(84, deltaX))}px)`;
+        card.style.opacity = String(Math.max(0.35, 1 - Math.abs(deltaX) / 120));
+      });
+
+      const finishSwipe = () => {
+        if (!tracking) return;
+        tracking = false;
+        if (Math.abs(deltaX) >= 54 && points.length > 1) {
+          card.dataset.ignoreClick = "1";
+          card.classList.add("swipe-removing");
+          card.style.transform = `translateX(${deltaX < 0 ? -110 : 110}px)`;
+          window.setTimeout(() => removePoint(pointId), 120);
+        } else {
+          card.style.transform = "";
+          card.style.opacity = "";
+        }
+      };
+
+      card.addEventListener("pointerup", finishSwipe);
+      card.addEventListener("pointercancel", finishSwipe);
+    }
+
+    function closeMobileSheets() {
+      pointSection.classList.remove("mobile-open");
+      glowSection.classList.remove("mobile-open");
+    }
+
+    function openMobileSheet(section) {
+      if (!mobileQuery.matches) return;
+      closeMobileSheets();
+      section.classList.add("mobile-open");
     }
 
     function renderFields() {
@@ -3102,6 +3465,7 @@
     function select(id) {
       selectedId = id;
       render();
+      openMobileSheet(pointSection);
     }
 
     function updateSelected(patch) {
@@ -3151,7 +3515,7 @@
       event.preventDefault();
       select(id);
       const move = pointerEvent => {
-        const box = stage.getBoundingClientRect();
+        const box = (mobileQuery.matches ? sphereWrap : stage).getBoundingClientRect();
         const x = Math.max(0, Math.min(100, ((pointerEvent.clientX - box.left) / box.width) * 100));
         const y = Math.max(0, Math.min(100, ((pointerEvent.clientY - box.top) / box.height) * 100));
         updateSelected({ x: Math.round(x), y: Math.round(y) });
@@ -3203,6 +3567,7 @@
       points.push({ id, name: t("newPoint"), x: 50, y: 50, color: "#b9d7ff", alpha: 0.5, radius: 50, shape: "circle", angle: 0, blur: 58 });
       selectedId = id;
       render();
+      openMobileSheet(pointSection);
     });
 
     document.getElementById("addHighlightBtn").addEventListener("click", () => {
@@ -3222,6 +3587,7 @@
       });
       selectedId = id;
       render();
+      openMobileSheet(pointSection);
     });
 
     document.getElementById("resetBtn").addEventListener("click", () => {
@@ -3268,6 +3634,24 @@
       const css = buildCss(cssSize);
       cssOutput.value = css;
       renderCssCode(css);
+    });
+
+    document.getElementById("mobileColorsBtn").addEventListener("click", () => {
+      closeMobileSheets();
+      document.querySelector(".color-section").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    document.getElementById("mobileGlowBtn").addEventListener("click", () => {
+      openMobileSheet(glowSection);
+    });
+
+    document.querySelectorAll("[data-mobile-close]").forEach(button => {
+      button.addEventListener("click", closeMobileSheets);
+    });
+
+    mobileQuery.addEventListener?.("change", event => {
+      closeMobileSheets();
+      render();
     });
 
     render();
