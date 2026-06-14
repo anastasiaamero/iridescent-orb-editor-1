@@ -55,7 +55,7 @@
       display: grid;
       place-items: center;
       background: #fff;
-      animation: intro-splash 3.4s ease forwards;
+      animation: intro-splash 5.2s ease forwards;
     }
 
     .intro-seen .intro-splash {
@@ -65,53 +65,77 @@
     .intro-splash-copy {
       display: grid;
       justify-items: center;
-      gap: 8px;
       opacity: 0;
-      transform: translateY(8px);
-      animation: intro-copy 2.8s ease forwards;
+      transform: translateY(6px);
+      animation: intro-copy 4.6s ease forwards;
     }
 
     .intro-splash-title {
+      position: relative;
+      isolation: isolate;
       margin: 0;
-      color: #202020;
+      color: transparent;
       font-size: clamp(19px, 2.5vw, 32px);
       line-height: 1;
       font-weight: 780;
       letter-spacing: 0;
-    }
-
-    .intro-splash-gradient {
-      color: transparent;
       background:
-        linear-gradient(100deg, #202020 0%, #7585ff 38%, #a66cff 62%, #202020 100%);
-      background-size: 220% 100%;
-      background-position: 100% 50%;
+        radial-gradient(circle at 8% 62%, #202020 0 13%, transparent 31%),
+        radial-gradient(circle at 38% 28%, #8fc9ff 0 12%, transparent 31%),
+        radial-gradient(circle at 64% 72%, #9b8cff 0 14%, transparent 34%),
+        radial-gradient(circle at 92% 34%, #f2a6d7 0 11%, transparent 30%),
+        #202020;
+      background-size: 145% 175%;
+      background-position: 92% 52%;
       -webkit-background-clip: text;
       background-clip: text;
-      animation: intro-gradient 2.4s ease-in-out forwards;
+      filter: blur(13px);
+      animation: intro-gradient 4.4s cubic-bezier(.22, .72, .24, 1) forwards;
     }
 
-    .intro-splash-subtitle {
-      margin: 0;
-      color: #c5c5c8;
-      font-size: clamp(7px, 0.8vw, 10px);
-      line-height: 1.2;
-      text-align: center;
+    .intro-splash-title::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      color: transparent;
+      background:
+        radial-gradient(circle at 18% 55%, rgba(143, 201, 255, .72), transparent 31%),
+        radial-gradient(circle at 54% 42%, rgba(155, 140, 255, .76), transparent 34%),
+        radial-gradient(circle at 86% 58%, rgba(242, 166, 215, .68), transparent 30%);
+      background-size: 150% 180%;
+      background-position: 90% 50%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: blur(16px);
+      opacity: 0;
+      animation: intro-glow 4.4s cubic-bezier(.22, .72, .24, 1) forwards;
     }
 
     @keyframes intro-copy {
-      0%, 10% { opacity: 0; transform: translateY(8px); }
-      30%, 72% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-5px); }
+      0%, 7% { opacity: 0; transform: translateY(6px); }
+      25%, 78% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-3px); }
     }
 
     @keyframes intro-gradient {
-      0% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% { background-position: 92% 52%; filter: blur(13px); }
+      30% { filter: blur(2px); }
+      52% { background-position: 48% 38%; filter: blur(0); }
+      80% { background-position: 8% 58%; filter: blur(.25px); }
+      100% { background-position: -18% 48%; filter: blur(8px); }
+    }
+
+    @keyframes intro-glow {
+      0% { opacity: 0; background-position: 90% 50%; transform: scale(.96); }
+      24% { opacity: .88; }
+      58% { opacity: .46; background-position: 42% 36%; transform: scale(1.025); }
+      82% { opacity: .7; background-position: 5% 62%; }
+      100% { opacity: 0; background-position: -20% 46%; transform: scale(1.05); }
     }
 
     @keyframes intro-splash {
-      0%, 76% { opacity: 1; visibility: visible; }
+      0%, 84% { opacity: 1; visibility: visible; }
       100% { opacity: 0; visibility: hidden; pointer-events: none; }
     }
 
@@ -764,13 +788,16 @@
 
     @media (prefers-reduced-motion: reduce) {
       .intro-splash {
-        animation-duration: 1.2s;
+        animation-duration: 1.6s;
       }
       .intro-splash-copy {
-        animation-duration: 1s;
+        animation-duration: 1.3s;
       }
-      .intro-splash-gradient {
+      .intro-splash-title,
+      .intro-splash-title::after {
         animation: none;
+        filter: none;
+        opacity: 1;
       }
       button {
         transition: none;
@@ -925,8 +952,7 @@
 <body>
   <div class="intro-splash" id="introSplash" aria-hidden="true">
     <div class="intro-splash-copy">
-      <p class="intro-splash-title">Orb <span class="intro-splash-gradient">editor</span></p>
-      <p class="intro-splash-subtitle">Create a colour animation<br>in code</p>
+      <p class="intro-splash-title" data-text="Orb editor">Orb editor</p>
     </div>
   </div>
   <main class="app">
