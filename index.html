@@ -441,7 +441,11 @@
 
     .mobile-sheet-close,
     .mobile-settings-tabs,
-    .mobile-delete-point {
+    .mobile-delete-point,
+    .mobile-menu-toggle,
+    .mobile-menu-backdrop,
+    .mobile-command-grid,
+    .mobile-export-btn {
       display: none;
     }
 
@@ -963,11 +967,12 @@
       .canvas-panel .panel-head {
         order: 1;
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: minmax(0, 1fr) 44px;
+        align-items: center;
+        gap: 10px;
         width: 100%;
         min-height: 0;
-        padding: 10px 4px 6px;
+        padding: 10px 4px 4px;
         border-radius: 18px;
         background: transparent;
       }
@@ -980,33 +985,114 @@
         font-size: 25px;
       }
 
+      .mobile-menu-toggle {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        background: #e5e5e8;
+      }
+
+      .mobile-menu-toggle span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        margin: 2px 0;
+        border-radius: 999px;
+        background: #202020;
+      }
+
       .canvas-panel .hint {
         display: none;
       }
 
       .canvas-panel .top-actions {
-        order: initial;
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        width: 100%;
-        align-self: center;
-        gap: 8px;
+        display: none;
       }
 
-      .canvas-panel .top-actions .action-btn {
-        min-width: 0;
-        height: 44px;
-        min-height: 44px;
-        padding: 0 14px;
+      .mobile-menu-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: block;
+        background: rgba(32, 32, 32, 0.08);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 180ms ease, visibility 180ms ease;
+      }
+
+      .mobile-menu-backdrop.open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .mobile-menu-panel {
+        position: absolute;
+        top: max(10px, env(safe-area-inset-top));
+        right: 10px;
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        width: 74px;
+        padding: 8px;
+        border-radius: 22px;
+        background: rgba(247, 247, 248, 0.96);
+        box-shadow: 0 14px 36px rgba(32, 32, 32, 0.14);
+        backdrop-filter: blur(18px);
+      }
+
+      .mobile-menu-close,
+      .mobile-menu-action {
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        padding: 0;
         border: 0;
-        background: #e5e5e8;
+        border-radius: 50%;
+        background: #e4e4e7;
+        color: #202020;
+        font: inherit;
         font-size: 13px;
+        font-weight: 800;
       }
 
-      .project-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+      .mobile-menu-close {
+        font-size: 28px;
+        font-weight: 500;
+      }
+
+      .mobile-upload-icon {
+        position: relative;
+        width: 22px;
+        height: 22px;
+      }
+
+      .mobile-upload-icon::before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 2px;
+        width: 2px;
+        height: 13px;
+        border-radius: 999px;
+        background: #202020;
+      }
+
+      .mobile-upload-icon::after {
+        content: "";
+        position: absolute;
+        left: 5px;
+        bottom: 2px;
+        width: 12px;
+        height: 7px;
+        border: 2px solid #202020;
+        border-top: 0;
       }
 
       .stage-wrap {
@@ -1039,7 +1125,7 @@
       }
 
       .canvas-code {
-        order: 6;
+        order: 5;
         display: grid;
         height: 238px;
         min-height: 238px;
@@ -1051,6 +1137,10 @@
 
       .canvas-code-inner {
         min-height: 0;
+      }
+
+      .canvas-code .code-head .action-btn {
+        display: none;
       }
 
       .css-code-view {
@@ -1066,60 +1156,47 @@
       }
 
       .controls-panel > .panel-head {
-        order: 3;
-        min-height: 58px;
-        padding: 4px 0 0;
-      }
-
-      .controls-panel h2 {
         display: none;
       }
 
-      .settings-actions {
+      .mobile-command-grid {
+        order: 3;
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
         width: 100%;
       }
 
-      .settings-actions .action-btn {
+      .mobile-command-grid .action-btn,
+      .mobile-command-grid .mobile-tab-btn {
         width: 100%;
         height: 46px;
         min-height: 46px;
         padding: 0 12px;
         border: 0;
-        background: #e3e3e6;
-        font-size: 13px;
-      }
-
-      .settings-actions .action-btn.primary {
-        background: #202020;
-      }
-
-      .mobile-settings-tabs {
-        order: 4;
-        display: grid;
-        grid-template-columns: 0.72fr 1.28fr;
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-        background: transparent;
-      }
-
-      .mobile-tab-btn {
-        width: 100%;
-        min-height: 48px;
-        border: 0;
-        border-radius: 18px;
+        border-radius: 16px;
         background: #e1e1e5;
-        color: var(--ink);
+        color: #202020;
         font: inherit;
         font-size: 13px;
         font-weight: 760;
       }
 
+      .mobile-command-grid .primary {
+        background: #202020;
+        color: #fff;
+      }
+
+      .mobile-command-grid .command-third {
+        grid-column: span 2;
+      }
+
+      .mobile-command-grid .command-half {
+        grid-column: span 3;
+      }
+
       .controls {
-        order: 5;
+        order: 4;
         display: block;
         margin: 0;
         padding: 0;
@@ -1284,9 +1361,18 @@
         background: #dedee3;
       }
 
+      .color-section .color-card.layer-touch-before {
+        box-shadow: inset 0 3px 0 #202020;
+      }
+
+      .color-section .color-card.layer-touch-after {
+        box-shadow: inset 0 -3px 0 #202020;
+      }
+
       .versions-section {
         min-height: 190px !important;
         margin: 0 !important;
+        border: 0 !important;
       }
 
       .versions-section .action-btn.primary {
@@ -1294,7 +1380,7 @@
       }
 
       .footer {
-        order: 7;
+        order: 6;
         grid-template-columns: 1fr;
         gap: 8px;
         padding: 0;
@@ -1309,6 +1395,14 @@
 
       .footer .action-btn.primary {
         background: #202020;
+      }
+
+      .footer #smallBtn {
+        display: none;
+      }
+
+      .footer .mobile-export-btn {
+        display: block;
       }
     }
   </style>
@@ -1326,6 +1420,9 @@
           <h1 data-i18n="title">Редактор шара</h1>
           <div class="hint" data-i18n="subtitle">Точки внутри шара экспортируются как реальные CSS radial-gradient.</div>
         </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Открыть меню">
+          <span></span><span></span><span></span>
+        </button>
         <div class="top-actions">
           <button class="action-btn lang-toggle" id="langToggle" type="button">EN</button>
           <div class="project-actions">
@@ -1336,12 +1433,30 @@
         </div>
       </div>
 
+      <div class="mobile-menu-backdrop" id="mobileMenuBackdrop">
+        <div class="mobile-menu-panel" role="dialog" aria-modal="true" aria-label="Меню">
+          <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Закрыть меню">×</button>
+          <button class="mobile-menu-action" id="mobileMenuLang" type="button">RU</button>
+          <button class="mobile-menu-action" id="mobileMenuLoad" type="button" aria-label="Загрузить">
+            <span class="mobile-upload-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
       <div class="stage-wrap">
         <div class="stage" id="stage">
           <div class="sphere-wrap" id="sphereWrap">
             <div class="sphere" id="sphere"></div>
           </div>
         </div>
+      </div>
+
+      <div class="mobile-command-grid">
+        <button class="action-btn primary command-third" id="mobileAddPointBtn" type="button" data-i18n="addPoint">Добавить точку</button>
+        <button class="action-btn command-third" id="mobileAddHighlightBtn" type="button" data-i18n="addHighlight">Добавить блик</button>
+        <button class="mobile-tab-btn command-third" id="mobileColorsBtn" type="button" data-i18n="layers">Слои</button>
+        <button class="mobile-tab-btn command-half" id="mobileGlowBtn" type="button" data-i18n="glowSection">Подложка и подсветка</button>
+        <button class="action-btn command-half" id="mobileResetBtn" type="button" data-i18n="reset">Сбросить</button>
       </div>
 
       <section class="canvas-code">
@@ -1364,11 +1479,6 @@
           <button class="action-btn primary" id="addBtn" type="button" data-i18n="addPoint">Добавить точку</button>
         </div>
       </div>
-
-      <nav class="mobile-settings-tabs" aria-label="Мобильные настройки">
-        <button class="mobile-tab-btn" id="mobileColorsBtn" type="button" data-i18n="layers">Слои</button>
-        <button class="mobile-tab-btn secondary" id="mobileGlowBtn" type="button" data-i18n="glowSection">Подложка и подсветка</button>
-      </nav>
 
       <div class="controls">
         <section class="section color-section" id="layersSection">
@@ -1431,6 +1541,7 @@
 
       <div class="footer">
         <button class="action-btn primary" id="copyBtn" type="button" data-i18n="copyCss">Скопировать CSS</button>
+        <button class="action-btn mobile-export-btn" id="mobileExportProjectBtn" type="button" data-i18n="exportProject">Выгрузить</button>
         <button class="action-btn" id="smallBtn" type="button">CSS для 66px</button>
       </div>
     </aside>
@@ -1669,6 +1780,8 @@
     const glowSection = document.getElementById("glowSection");
     const layersSection = document.getElementById("layersSection");
     const mobileDeletePointBtn = document.getElementById("mobileDeletePointBtn");
+    const mobileMenuBackdrop = document.getElementById("mobileMenuBackdrop");
+    const mobileMenuLang = document.getElementById("mobileMenuLang");
     const mobileQuery = window.matchMedia("(max-width: 560px)");
     const fieldLabels = {};
     Object.entries(fields).forEach(([key, input]) => {
@@ -1698,6 +1811,7 @@
         element.textContent = t(element.dataset.i18n);
       });
       document.getElementById("langToggle").textContent = currentLang === "ru" ? "EN" : "RU";
+      mobileMenuLang.textContent = currentLang === "ru" ? "EN" : "RU";
       document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
       localStorage.setItem("orb-gradient-editor-lang", currentLang);
       renderList();
@@ -2514,16 +2628,61 @@
     }
     @media (max-width: 780px) {
       body {
-        display: block;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
         height: auto;
+        min-height: 100vh;
+        padding: 10px;
         overflow: auto;
       }
-      .workspace {
-        min-height: 920px;
-        margin-bottom: 16px;
-      }
       .panel {
-        min-height: 720px;
+        order: 1;
+        min-height: 0;
+        padding: 14px;
+        border-radius: 22px;
+        overflow: visible;
+      }
+      .workspace {
+        order: 2;
+        display: block;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .preview-stage {
+        display: none;
+      }
+      body.scene-mode .preview-stage {
+        display: grid;
+        height: 360px;
+        margin-bottom: 10px;
+      }
+      .code-area {
+        height: 520px;
+        padding: 12px;
+        border-radius: 22px;
+        background: #fff;
+        box-shadow: 0 12px 36px rgba(32, 32, 32, 0.06);
+      }
+      .panel-head h1 {
+        max-width: calc(100vw - 150px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tab-content.active {
+        max-height: none;
+        overflow: visible;
+      }
+      #animationControls.active {
+        grid-template-rows: none;
+      }
+      body.scene-mode .workspace {
+        display: block;
       }
     }
     @keyframes bubble-motion {
@@ -3426,12 +3585,21 @@
         event.preventDefault();
         card.classList.add("layer-touch-dragging");
         card.style.transform = `translateY(${deltaY}px) scale(1.025)`;
-        colorList.querySelectorAll(".color-card").forEach(item => item.classList.remove("layer-touch-target"));
-        const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest(".color-card[data-point-id]");
-        if (hovered && hovered.dataset.pointId !== pointId) {
-          targetId = hovered.dataset.pointId;
-          targetAfter = event.clientY > hovered.getBoundingClientRect().top + hovered.offsetHeight / 2;
-          hovered.classList.add("layer-touch-target");
+        const candidates = [...colorList.querySelectorAll(".color-card[data-point-id]")]
+          .filter(item => item.dataset.pointId !== pointId);
+        candidates.forEach(item => item.classList.remove("layer-touch-target", "layer-touch-before", "layer-touch-after"));
+        if (candidates.length) {
+          const listRect = colorList.getBoundingClientRect();
+          if (event.clientY < listRect.top + 52) colorList.scrollTop -= 12;
+          if (event.clientY > listRect.bottom - 52) colorList.scrollTop += 12;
+          const closest = candidates.reduce((best, item) => {
+            const rect = item.getBoundingClientRect();
+            const distance = Math.abs(event.clientY - (rect.top + rect.height / 2));
+            return !best || distance < best.distance ? { item, rect, distance } : best;
+          }, null);
+          targetId = closest.item.dataset.pointId;
+          targetAfter = event.clientY > closest.rect.top + closest.rect.height / 2;
+          closest.item.classList.add("layer-touch-target", targetAfter ? "layer-touch-after" : "layer-touch-before");
         }
       });
 
@@ -3440,10 +3608,12 @@
         tracking = false;
         card.style.transform = "";
         card.classList.remove("layer-touch-dragging");
-        colorList.querySelectorAll(".color-card").forEach(item => item.classList.remove("layer-touch-target"));
-        if (moved && targetId !== pointId) {
+        colorList.querySelectorAll(".color-card").forEach(item => {
+          item.classList.remove("layer-touch-target", "layer-touch-before", "layer-touch-after");
+        });
+        if (moved) {
           card.dataset.ignoreClick = "1";
-          reorderPoint(pointId, targetId, targetAfter);
+          if (targetId !== pointId) reorderPoint(pointId, targetId, targetAfter);
         }
       };
 
@@ -3757,6 +3927,32 @@
       renderCssCode(css);
     });
 
+    function setMobileMenu(open) {
+      mobileMenuBackdrop.classList.toggle("open", open);
+      document.body.style.overflow = open ? "hidden" : "";
+    }
+
+    document.getElementById("mobileMenuToggle").addEventListener("click", () => setMobileMenu(true));
+    document.getElementById("mobileMenuClose").addEventListener("click", () => setMobileMenu(false));
+    mobileMenuBackdrop.addEventListener("click", event => {
+      if (event.target === mobileMenuBackdrop) setMobileMenu(false);
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") setMobileMenu(false);
+    });
+    mobileMenuLang.addEventListener("click", () => {
+      document.getElementById("langToggle").click();
+      setMobileMenu(false);
+    });
+    document.getElementById("mobileMenuLoad").addEventListener("click", () => {
+      setMobileMenu(false);
+      projectFileInput.click();
+    });
+    document.getElementById("mobileAddPointBtn").addEventListener("click", () => document.getElementById("addBtn").click());
+    document.getElementById("mobileAddHighlightBtn").addEventListener("click", () => document.getElementById("addHighlightBtn").click());
+    document.getElementById("mobileResetBtn").addEventListener("click", () => document.getElementById("resetBtn").click());
+    document.getElementById("mobileExportProjectBtn").addEventListener("click", downloadProject);
+
     document.getElementById("mobileColorsBtn").addEventListener("click", () => {
       openMobileSheet(layersSection);
     });
@@ -3774,6 +3970,7 @@
     });
 
     mobileQuery.addEventListener?.("change", event => {
+      setMobileMenu(false);
       closeMobileSheets();
       render();
     });
