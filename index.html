@@ -998,7 +998,7 @@
         height: 44px;
         min-height: 44px;
         padding: 0 14px;
-        border: 1px solid #d7d7dc;
+        border: 0;
         background: #e5e5e8;
         font-size: 13px;
       }
@@ -1035,6 +1035,7 @@
       .point {
         width: 19px;
         height: 19px;
+        touch-action: none;
       }
 
       .canvas-code {
@@ -1086,19 +1087,20 @@
         height: 46px;
         min-height: 46px;
         padding: 0 12px;
-        border: 1px solid #d4d4d9;
+        border: 0;
         background: #e3e3e6;
         font-size: 13px;
       }
 
       .settings-actions .action-btn.primary {
-        border-color: #202020;
         background: #202020;
       }
 
       .mobile-settings-tabs {
         order: 4;
-        display: block;
+        display: grid;
+        grid-template-columns: 0.72fr 1.28fr;
+        gap: 8px;
         margin: 0;
         padding: 0;
         background: transparent;
@@ -1107,17 +1109,13 @@
       .mobile-tab-btn {
         width: 100%;
         min-height: 48px;
-        border: 1px solid #d4d4d9;
+        border: 0;
         border-radius: 18px;
         background: #e1e1e5;
         color: var(--ink);
         font: inherit;
         font-size: 13px;
         font-weight: 760;
-      }
-
-      #mobileColorsBtn {
-        display: none;
       }
 
       .controls {
@@ -1136,12 +1134,9 @@
         background: #ededf0;
       }
 
-      .color-section {
-        display: none;
-      }
-
       .point-section,
-      .glow-section {
+      .glow-section,
+      .color-section {
         position: fixed;
         left: 8px;
         right: 8px;
@@ -1166,7 +1161,8 @@
       }
 
       .point-section.mobile-open,
-      .glow-section.mobile-open {
+      .glow-section.mobile-open,
+      .color-section.mobile-open {
         visibility: visible;
         opacity: 1;
         transform: translateY(0);
@@ -1174,12 +1170,11 @@
       }
 
       .section-heading {
-        position: sticky;
-        top: -16px;
+        position: static;
         z-index: 2;
         margin: -2px -2px 8px;
         padding: 2px 2px 8px;
-        background: #f7f7f8;
+        background: transparent;
       }
 
       .section-heading .section-title {
@@ -1197,6 +1192,12 @@
         color: var(--ink);
         font-size: 23px;
         line-height: 1;
+      }
+
+      .mobile-sheet-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .point-section .field-grid,
@@ -1219,12 +1220,13 @@
 
       .mobile-delete-point {
         display: block;
-        width: 100%;
-        min-height: 46px;
-        margin-top: 16px;
+        width: auto;
+        min-height: 38px;
+        margin: 0;
+        padding: 0 14px;
         border: 0;
-        border-radius: 16px;
-        background: #e7e7ea;
+        border-radius: 999px;
+        background: #dedee2;
         color: #202020;
         font: inherit;
         font-size: 13px;
@@ -1233,6 +1235,53 @@
 
       .mobile-delete-point:disabled {
         display: none;
+      }
+
+      .color-section .section-heading {
+        display: flex;
+      }
+
+      .color-section .color-list {
+        display: grid;
+        grid-auto-rows: 62px;
+        gap: 8px;
+        height: calc(100% - 52px);
+        overflow-y: auto;
+        padding: 0 2px 12px 0;
+      }
+
+      .color-section .color-card {
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 12px;
+        width: 100%;
+        height: 62px;
+        min-height: 62px;
+        padding: 10px 14px;
+        border-radius: 17px;
+        background: #fff;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .color-section .color-card .delete-btn {
+        display: none;
+      }
+
+      .color-section .color-card .swatch {
+        width: 34px;
+        height: 34px;
+      }
+
+      .color-section .color-card.layer-touch-dragging {
+        z-index: 4;
+        opacity: 0.76;
+        transform: scale(1.025);
+        box-shadow: 0 12px 28px rgba(32, 32, 32, 0.14);
+      }
+
+      .color-section .color-card.layer-touch-target {
+        background: #dedee3;
       }
 
       .versions-section {
@@ -1254,12 +1303,11 @@
       .footer .action-btn {
         height: 46px;
         min-height: 46px;
-        border: 1px solid #d4d4d9;
+        border: 0;
         background: #e1e1e5;
       }
 
       .footer .action-btn.primary {
-        border-color: #202020;
         background: #202020;
       }
     }
@@ -1318,20 +1366,26 @@
       </div>
 
       <nav class="mobile-settings-tabs" aria-label="Мобильные настройки">
-        <button class="mobile-tab-btn" id="mobileColorsBtn" type="button" data-i18n="colorPoints">Цветовые точки</button>
+        <button class="mobile-tab-btn" id="mobileColorsBtn" type="button" data-i18n="layers">Слои</button>
         <button class="mobile-tab-btn secondary" id="mobileGlowBtn" type="button" data-i18n="glowSection">Подложка и подсветка</button>
       </nav>
 
       <div class="controls">
-        <section class="section color-section">
-          <p class="section-title" data-i18n="colorPoints">Цветовые точки</p>
+        <section class="section color-section" id="layersSection">
+          <div class="section-heading">
+            <p class="section-title" data-i18n="layers">Слои</p>
+            <button class="mobile-sheet-close" type="button" data-mobile-close aria-label="Закрыть">×</button>
+          </div>
           <div class="color-list" id="colorList"></div>
         </section>
 
         <section class="section point-section" id="pointSection">
           <div class="section-heading">
             <p class="section-title" data-i18n="selectedPoint">Выбранная точка</p>
-            <button class="mobile-sheet-close" type="button" data-mobile-close aria-label="Закрыть">×</button>
+            <div class="mobile-sheet-actions">
+              <button class="mobile-delete-point" id="mobileDeletePointBtn" type="button" data-i18n="deletePoint">Удалить точку</button>
+              <button class="mobile-sheet-close" type="button" data-mobile-close aria-label="Закрыть">×</button>
+            </div>
           </div>
           <div class="field-grid">
             <label><span data-i18n="name">Название</span> <input id="nameInput" type="text"></label>
@@ -1349,7 +1403,6 @@
             <label><span data-i18n="spotRotation">Поворот пятна, °</span> <input id="angleInput" type="range" min="0" max="360" step="1"></label>
             <label><span data-i18n="spotBlur">Размытие пятна, %</span> <input id="pointBlurInput" type="range" min="0" max="100" step="1"></label>
           </div>
-          <button class="mobile-delete-point" id="mobileDeletePointBtn" type="button" data-i18n="deletePoint">Удалить точку</button>
         </section>
 
         <section class="section glow-section" id="glowSection">
@@ -1421,6 +1474,7 @@
         addPoint: "Добавить точку",
         addHighlight: "Добавить блик",
         colorPoints: "Цветовые точки",
+        layers: "Слои",
         selectedPoint: "Выбранная точка",
         name: "Название",
         color: "Цвет",
@@ -1503,6 +1557,7 @@
         addPoint: "Add point",
         addHighlight: "Add highlight",
         colorPoints: "Color points",
+        layers: "Layers",
         selectedPoint: "Selected point",
         name: "Name",
         color: "Color",
@@ -1612,6 +1667,7 @@
     };
     const pointSection = document.getElementById("pointSection");
     const glowSection = document.getElementById("glowSection");
+    const layersSection = document.getElementById("layersSection");
     const mobileDeletePointBtn = document.getElementById("mobileDeletePointBtn");
     const mobileQuery = window.matchMedia("(max-width: 560px)");
     const fieldLabels = {};
@@ -1628,6 +1684,7 @@
     let versions = loadVersions();
     let selectedId = points[0].id;
     let draggedPointId = null;
+    let suppressPointClickUntil = 0;
     let cssSize = "large";
     let currentLang = localStorage.getItem("orb-gradient-editor-lang") || "ru";
 
@@ -3251,9 +3308,12 @@
         marker.style.setProperty("--color", point.color);
         marker.title = displayPointName(point);
         marker.addEventListener("pointerdown", event => {
-          if (!mobileQuery.matches) startDrag(event, point.id);
+          startDrag(event, point.id);
         });
-        marker.addEventListener("click", () => select(point.id));
+        marker.addEventListener("click", () => {
+          if (Date.now() < suppressPointClickUntil) return;
+          select(point.id);
+        });
         (mobileQuery.matches ? sphereWrap : stage).append(marker);
       });
     }
@@ -3279,7 +3339,7 @@
         const card = document.createElement("div");
         card.className = `color-card${point.id === selectedId ? " selected" : ""}`;
         card.tabIndex = 0;
-        card.draggable = true;
+        card.draggable = !mobileQuery.matches;
         card.dataset.pointId = point.id;
         card.setAttribute("role", "button");
         card.innerHTML = `
@@ -3334,53 +3394,67 @@
             item.classList.remove("dragging", "drop-before", "drop-after");
           });
         });
-        addMobileSwipeDelete(card, point.id);
+        addMobileLayerDrag(card, point.id);
         colorList.append(card);
       });
     }
 
-    function addMobileSwipeDelete(card, pointId) {
+    function addMobileLayerDrag(card, pointId) {
       let startX = 0;
-      let deltaX = 0;
+      let startY = 0;
       let tracking = false;
+      let moved = false;
+      let targetId = pointId;
+      let targetAfter = false;
 
       card.addEventListener("pointerdown", event => {
         if (!mobileQuery.matches || event.pointerType === "mouse") return;
         startX = event.clientX;
-        deltaX = 0;
+        startY = event.clientY;
         tracking = true;
+        moved = false;
+        targetId = pointId;
         card.setPointerCapture?.(event.pointerId);
       });
 
       card.addEventListener("pointermove", event => {
         if (!tracking) return;
-        deltaX = event.clientX - startX;
-        if (Math.abs(deltaX) < 7) return;
-        card.style.transform = `translateX(${Math.max(-84, Math.min(84, deltaX))}px)`;
-        card.style.opacity = String(Math.max(0.35, 1 - Math.abs(deltaX) / 120));
+        const deltaX = event.clientX - startX;
+        const deltaY = event.clientY - startY;
+        if (!moved && Math.hypot(deltaX, deltaY) < 8) return;
+        moved = true;
+        event.preventDefault();
+        card.classList.add("layer-touch-dragging");
+        card.style.transform = `translateY(${deltaY}px) scale(1.025)`;
+        colorList.querySelectorAll(".color-card").forEach(item => item.classList.remove("layer-touch-target"));
+        const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest(".color-card[data-point-id]");
+        if (hovered && hovered.dataset.pointId !== pointId) {
+          targetId = hovered.dataset.pointId;
+          targetAfter = event.clientY > hovered.getBoundingClientRect().top + hovered.offsetHeight / 2;
+          hovered.classList.add("layer-touch-target");
+        }
       });
 
-      const finishSwipe = () => {
+      const finishDrag = () => {
         if (!tracking) return;
         tracking = false;
-        if (Math.abs(deltaX) >= 54 && points.length > 1) {
+        card.style.transform = "";
+        card.classList.remove("layer-touch-dragging");
+        colorList.querySelectorAll(".color-card").forEach(item => item.classList.remove("layer-touch-target"));
+        if (moved && targetId !== pointId) {
           card.dataset.ignoreClick = "1";
-          card.classList.add("swipe-removing");
-          card.style.transform = `translateX(${deltaX < 0 ? -110 : 110}px)`;
-          window.setTimeout(() => removePoint(pointId), 120);
-        } else {
-          card.style.transform = "";
-          card.style.opacity = "";
+          reorderPoint(pointId, targetId, targetAfter);
         }
       };
 
-      card.addEventListener("pointerup", finishSwipe);
-      card.addEventListener("pointercancel", finishSwipe);
+      card.addEventListener("pointerup", finishDrag);
+      card.addEventListener("pointercancel", finishDrag);
     }
 
     function closeMobileSheets() {
       pointSection.classList.remove("mobile-open");
       glowSection.classList.remove("mobile-open");
+      layersSection.classList.remove("mobile-open");
     }
 
     function openMobileSheet(section) {
@@ -3545,19 +3619,34 @@
     function startDrag(event, id) {
       if (id === "outline") return;
       event.preventDefault();
-      select(id);
+      selectedId = id;
+      let moved = false;
+      const marker = event.currentTarget;
+      const startX = event.clientX;
+      const startY = event.clientY;
+      marker.classList.add("selected");
+      marker.setPointerCapture?.(event.pointerId);
       const move = pointerEvent => {
+        if (Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY) > 5) moved = true;
         const box = (mobileQuery.matches ? sphereWrap : stage).getBoundingClientRect();
         const x = Math.max(0, Math.min(100, ((pointerEvent.clientX - box.left) / box.width) * 100));
         const y = Math.max(0, Math.min(100, ((pointerEvent.clientY - box.top) / box.height) * 100));
-        updateSelected({ x: Math.round(x), y: Math.round(y) });
+        points = points.map(point => point.id === id ? { ...point, x: Math.round(x), y: Math.round(y) } : point);
+        marker.style.setProperty("--x", Math.round(x));
+        marker.style.setProperty("--y", Math.round(y));
+        applySphere();
       };
       const stop = () => {
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", stop);
+        window.removeEventListener("pointercancel", stop);
+        if (moved) suppressPointClickUntil = Date.now() + 400;
+        render();
+        if (!moved && mobileQuery.matches) openMobileSheet(pointSection);
       };
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", stop);
+      window.addEventListener("pointercancel", stop);
     }
 
     Object.entries(fields).forEach(([key, input]) => {
@@ -3669,8 +3758,7 @@
     });
 
     document.getElementById("mobileColorsBtn").addEventListener("click", () => {
-      closeMobileSheets();
-      document.querySelector(".color-section").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      openMobileSheet(layersSection);
     });
 
     document.getElementById("mobileGlowBtn").addEventListener("click", () => {
