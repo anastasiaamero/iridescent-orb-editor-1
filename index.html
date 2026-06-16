@@ -2787,26 +2787,33 @@
       }
     }
     @keyframes bubble-motion {
-      0%, 100% {
+      0% {
         background-position: var(--pos-a);
         background-size: var(--size-a);
-        transform: translateY(0) scale(1);
+        transform: translateY(0) rotate(0deg) scale(1);
         border-radius: var(--shape-a);
         filter: saturate(1.08) brightness(1);
       }
       45% {
         background-position: var(--pos-b);
         background-size: var(--size-b);
-        transform: translateY(var(--float)) scale(1.006);
+        transform: translateY(var(--float)) rotate(var(--turn-mid)) scale(1.006);
         border-radius: var(--shape-b);
         filter: saturate(1.14) brightness(1.025);
       }
       72% {
         background-position: var(--pos-c);
         background-size: var(--size-c);
-        transform: translateY(var(--float-half)) scale(0.998);
+        transform: translateY(var(--float-half)) rotate(var(--turn-partial)) scale(0.998);
         border-radius: var(--shape-c);
         filter: saturate(1.1) brightness(1.01);
+      }
+      100% {
+        background-position: var(--pos-a);
+        background-size: var(--size-a);
+        transform: translateY(0) rotate(var(--turn-full)) scale(1);
+        border-radius: var(--shape-a);
+        filter: saturate(1.08) brightness(1);
       }
     }
     @keyframes glow-drift {
@@ -2863,7 +2870,7 @@
       </div>
       <label>${t("speed")} <input id="speed" type="range" min="2" max="20" value="8" step="0.5"></label>
       <label>${t("gradientMove")} <input id="shift" type="range" min="0" max="36" value="18" step="1"></label>
-      <label>${t("rotation")} <input id="rotation" type="range" min="0" max="180" value="38" step="1"></label>
+      <label>${t("rotation")} <input id="rotation" type="range" min="0" max="360" value="38" step="1"></label>
       <label>${t("verticalMove")} <input id="float" type="range" min="0" max="18" value="3" step="1"></label>
       <label>${t("glowMove")} <input id="glowMove" type="range" min="0" max="40" value="12" step="1"></label>
       <label>${t("glowPulse")} <input id="glowPulse" type="range" min="0" max="0.55" value="0.14" step="0.01"></label>
@@ -3076,6 +3083,9 @@
         const driftX = Math.cos(angle) * strength * (index % 2 ? 0.68 : 1);
         const driftY = Math.sin(angle * 0.74) * strength * (index % 2 ? 0.42 : 0.58);
         const color = colors?.[point.id] || point.color;
+        if (point.shape === "arc") {
+          return gradientForPoint(point, point.x, point.y, point.alpha, color);
+        }
         const x = Math.max(-10, Math.min(110, point.x + driftX));
         const y = Math.max(-10, Math.min(110, point.y + driftY));
         return gradientForPoint(point, x.toFixed(2), y.toFixed(2), point.alpha, color);
@@ -3288,8 +3298,10 @@
 
       const shape = Number(controls.shape.value) / 400;
       const shapeWave = Math.sin(phase) * shape;
+      const rotationAngle = phase * Number(controls.rotation.value) / 360;
       ctx.save();
       ctx.translate(centerX, centerY + floatingY);
+      ctx.rotate(rotationAngle);
       ctx.scale(1 + shapeWave, 1 - shapeWave);
       ctx.translate(-centerX, -(centerY + floatingY));
       ctx.beginPath();
@@ -3308,8 +3320,8 @@
       [...version.points].reverse().forEach((point, reverseIndex) => {
         const index = version.points.length - 1 - reverseIndex;
         const angle = phase + index * 0.82;
-        const driftX = Math.cos(angle) * shift * (index % 2 ? 0.68 : 1);
-        const driftY = Math.sin(angle * 0.74) * shift * (index % 2 ? 0.42 : 0.58);
+        const driftX = point.shape === "arc" ? 0 : Math.cos(angle) * shift * (index % 2 ? 0.68 : 1);
+        const driftY = point.shape === "arc" ? 0 : Math.sin(angle * 0.74) * shift * (index % 2 ? 0.42 : 0.58);
         const pointX = centerX - diameter / 2 + diameter * (Number(point.x) + driftX) / 100;
         const pointY = centerY + floatingY - diameter / 2 + diameter * (Number(point.y) + driftY) / 100;
         const radius = diameter * Number(point.radius) / 100;
@@ -3498,7 +3510,6 @@
       const shape = Number(controls.shape.value);
       const pulse = Number(controls.glowPulse.value);
       const turn = Number(controls.rotation.value);
-      const axis = Math.min(0.08, turn / 1800);
       wrap.style.setProperty("--glow-color", rgba(version.glow.color, version.glow.alpha));
       wrap.style.setProperty("--glow-blur", version.glow.blur + "px");
       wrap.style.setProperty("--glow-size", version.glow.size + "%");
@@ -3522,8 +3533,9 @@
       sphere.style.setProperty("--size-a", buildBackgroundSize());
       sphere.style.setProperty("--size-b", buildBackgroundSize());
       sphere.style.setProperty("--size-c", buildBackgroundSize());
-      sphere.style.setProperty("--axis-x", (1 + axis).toFixed(3));
-      sphere.style.setProperty("--axis-y", (1 - axis).toFixed(3));
+      sphere.style.setProperty("--turn-mid", (turn * 0.45) + "deg");
+      sphere.style.setProperty("--turn-partial", (turn * 0.72) + "deg");
+      sphere.style.setProperty("--turn-full", turn + "deg");
       sphere.style.setProperty("--float", "-" + controls.float.value + "px");
       sphere.style.setProperty("--float-half", "-" + (Number(controls.float.value) / 2) + "px");
       sphere.style.setProperty("--shape-a", (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%");
@@ -3582,13 +3594,12 @@
       const shapeB = (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%";
       const shapeC = (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%";
       const turn = Number(controls.rotation.value);
-      const axis = Math.min(0.08, turn / 1800);
-      const axisX = (1 + axis).toFixed(3);
-      const axisY = (1 - axis).toFixed(3);
+      const turnMid = turn * 0.45;
+      const turnPartial = turn * 0.72;
       return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: 300px;\\n  height: 300px;\\n}\\n\\n" +
         ".hologram-sphere-wrap::before {\\n  content: \\"\\";\\n  position: absolute;\\n  left: " + version.glow.x + "%;\\n  top: " + version.glow.y + "%;\\n  width: " + version.glow.size + "%;\\n  aspect-ratio: 1;\\n  border-radius: 50%;\\n  background: radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%), conic-gradient(from 0deg, " + rgba(version.glow.color, version.glow.alpha) + ", transparent 28%, " + rgba(version.glow.color, version.glow.alpha) + " 56%, transparent 78%, " + rgba(version.glow.color, version.glow.alpha) + ");\\n  filter: blur(" + version.glow.blur + "px) saturate(1.28);\\n  transform: translate(-50%, -50%);\\n  animation: glow-drift " + controls.glowSpin.value + "s linear infinite;\\n}\\n\\n" +
         ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: 300px;\\n  height: 300px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite;\\n}\\n\\n" +
-        "@keyframes bubble-motion {\\n  0%, 100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n}\\n\\n" +
+        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) rotate(0deg) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) rotate(" + turnMid + "deg) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) rotate(" + turnPartial + "deg) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) rotate(" + turn + "deg) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
         "@keyframes glow-drift {\\n  0% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(0deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n  50% { transform: translate(calc(-50% + " + controls.glowMove.value + "px), calc(-50% - " + (Number(controls.glowMove.value) / 3) + "px)) rotate(180deg); opacity: " + Math.max(0.28, 0.86 - Number(controls.glowPulse.value)).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.45) hue-rotate(" + Math.round(10 + Number(controls.glowPulse.value) * 80) + "deg); }\\n  100% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(360deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n}\\n";
     }
     Object.values(controls).forEach(input => input.addEventListener("input", apply));
