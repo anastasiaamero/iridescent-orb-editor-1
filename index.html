@@ -3207,6 +3207,17 @@
       sceneFrame.style.backgroundColor = activeTab === "scene" ? sceneBackgroundColor : "#f7f7f8";
       sceneFrame.style.backgroundImage = activeTab === "scene" && backgroundUrl ? 'url("' + backgroundUrl + '")' : "";
     }
+    function resetEditorPreviewSurface() {
+      sceneFrame.style.backgroundColor = "#f7f7f8";
+      sceneFrame.style.backgroundImage = "";
+      sceneFrame.style.width = "100%";
+      sceneFrame.style.height = "100%";
+      sceneFrame.style.aspectRatio = "";
+      wrap.style.position = "relative";
+      wrap.style.left = "";
+      wrap.style.top = "";
+      wrap.style.transform = "";
+    }
     function setTab(tab) {
       activeTab = tab;
       const isScene = tab === "scene";
@@ -3221,21 +3232,13 @@
       sceneControls.classList.toggle("active", isScene);
       syncSceneAnimationMode();
       if (!isScene) {
-        backgroundColor.value = "#f7f7f8";
-        sceneFrame.style.backgroundColor = "#f7f7f8";
-        sceneFrame.style.backgroundImage = "";
-        sceneFrame.style.width = "100%";
-        sceneFrame.style.height = "100%";
-        sceneFrame.style.aspectRatio = "";
-        wrap.style.position = "relative";
-        wrap.style.left = "";
-        wrap.style.top = "";
-        wrap.style.transform = "";
+        resetEditorPreviewSurface();
         codeLabel.textContent = isColor ? ${JSON.stringify(t("colorCss"))} : ${JSON.stringify(t("animationCss"))};
         code.value = isColor ? buildColorCode() : buildCode();
       } else {
         backgroundColor.value = sceneBackgroundColor;
         syncSceneAnimationMode();
+        apply();
         requestAnimationFrame(fitSceneFrame);
       }
     }
@@ -3627,8 +3630,8 @@
     backgroundColor.addEventListener("input", () => {
       if (activeTab === "scene") {
         sceneBackgroundColor = backgroundColor.value;
+        sceneFrame.style.backgroundColor = sceneBackgroundColor;
       }
-      sceneFrame.style.backgroundColor = backgroundColor.value;
     });
     backgroundInput.addEventListener("change", () => {
       const file = backgroundInput.files && backgroundInput.files[0];
