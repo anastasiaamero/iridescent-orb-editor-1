@@ -3076,9 +3076,6 @@
         const driftX = Math.cos(angle) * strength * (index % 2 ? 0.68 : 1);
         const driftY = Math.sin(angle * 0.74) * strength * (index % 2 ? 0.42 : 0.58);
         const color = colors?.[point.id] || point.color;
-        if (point.shape === "arc") {
-          return gradientForPoint(point, point.x, point.y, point.alpha, color);
-        }
         const x = Math.max(-10, Math.min(110, point.x + driftX));
         const y = Math.max(-10, Math.min(110, point.y + driftY));
         return gradientForPoint(point, x.toFixed(2), y.toFixed(2), point.alpha, color);
