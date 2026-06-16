@@ -2713,15 +2713,14 @@
         overflow: auto;
       }
       .panel {
-        order: 1;
+        order: 2;
         min-height: 0;
         padding: 14px;
         border-radius: 22px;
         overflow: visible;
       }
       .workspace {
-        order: 2;
-        display: block;
+        display: contents;
         min-height: 0;
         padding: 0;
         border: 0;
@@ -2730,15 +2729,18 @@
         box-shadow: none;
       }
       .preview-stage {
-        display: none;
-      }
-      body.scene-mode .preview-stage {
+        order: 1;
         display: grid;
-        height: 360px;
-        margin-bottom: 10px;
+        height: min(54dvh, 380px);
+        min-height: 280px;
+        margin: 0;
+        border: 1px solid rgba(32, 32, 32, 0.06);
+        background: #f7f7f8;
+        box-shadow: 0 12px 36px rgba(32, 32, 32, 0.05);
       }
       .code-area {
-        height: 520px;
+        order: 3;
+        height: 420px;
         padding: 12px;
         border-radius: 22px;
         background: #fff;
@@ -2757,8 +2759,11 @@
       #animationControls.active {
         grid-template-rows: none;
       }
-      body.scene-mode .workspace {
-        display: block;
+      body.scene-mode .preview-stage {
+        background: #fff;
+      }
+      body.scene-mode .code-area {
+        display: none;
       }
     }
     @keyframes bubble-motion {
