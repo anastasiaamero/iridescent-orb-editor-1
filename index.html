@@ -3544,7 +3544,10 @@
       const duration = Math.max(0.1, Number(controls.speed.value)) * 1000;
       const shift = Number(controls.shift.value);
       const phase = ((now - animationStart) / duration) * Math.PI * 2;
-      sphere.style.setProperty("--sphere-bg", usesColorTransition() ? buildBackground() : buildBackground(phase, shift));
+      sphere.style.setProperty("--sphere-bg", buildBackground(phase, shift));
+      if (usesColorTransition()) {
+        sphere.style.setProperty("--color-bg-target", buildBackground(phase, shift, targetColors));
+      }
       requestAnimationFrame(tick);
     }
     function buildColorCode() {
