@@ -1720,6 +1720,12 @@
         colorSpeed: "Скорость перехода, сек",
         colorOpacity: "Прозрачность второго цвета",
         colorCss: "CSS перехода цвета",
+        exportSettings: "Выгрузить",
+        loadSettings: "Загрузить",
+        settingsImportError: "Не удалось загрузить настройки.",
+        sceneAnimationType: "Тип анимации",
+        sceneAnimationNormal: "Обычная анимация",
+        sceneAnimationColor: "Смена цвета",
         uploadBackground: "Загрузить фон",
         removeBackground: "Удалить фон",
         backgroundColor: "Цвет фона",
@@ -1803,6 +1809,12 @@
         colorSpeed: "Transition speed, sec",
         colorOpacity: "Second color opacity",
         colorCss: "Color transition CSS",
+        exportSettings: "Export",
+        loadSettings: "Load",
+        settingsImportError: "The settings file could not be loaded.",
+        sceneAnimationType: "Animation type",
+        sceneAnimationNormal: "Standard animation",
+        sceneAnimationColor: "Color transition",
         uploadBackground: "Upload background",
         removeBackground: "Remove background",
         backgroundColor: "Background color",
@@ -2478,7 +2490,7 @@
       padding-right: 2px;
     }
     #animationControls.active {
-      grid-template-rows: repeat(8, minmax(54px, auto));
+      grid-template-rows: none;
     }
     #colorControls.active {
       align-content: start;
@@ -2550,6 +2562,11 @@
       grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
+    .settings-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
     .scene-btn,
     select,
     input[type="number"] {
@@ -2593,6 +2610,9 @@
       line-height: 1.35;
     }
     #backgroundInput {
+      display: none;
+    }
+    #settingsInput {
       display: none;
     }
     .close-btn {
@@ -2837,6 +2857,10 @@
       <button class="tab-btn" id="sceneTab" type="button">${t("sceneTab")}</button>
     </div>
     <div class="tab-content active" id="animationControls">
+      <div class="settings-actions">
+        <button class="scene-btn" id="exportAnimationSettingsBtn" type="button">${t("exportSettings")}</button>
+        <button class="scene-btn" id="loadAnimationSettingsBtn" type="button">${t("loadSettings")}</button>
+      </div>
       <label>${t("speed")} <input id="speed" type="range" min="2" max="20" value="8" step="0.5"></label>
       <label>${t("gradientMove")} <input id="shift" type="range" min="0" max="36" value="18" step="1"></label>
       <label>${t("rotation")} <input id="rotation" type="range" min="0" max="180" value="38" step="1"></label>
@@ -2847,6 +2871,10 @@
       <label>${t("shapeChange")} <input id="shape" type="range" min="0" max="8" value="2" step="1"></label>
     </div>
     <div class="tab-content" id="colorControls">
+      <div class="settings-actions">
+        <button class="scene-btn" id="exportColorSettingsBtn" type="button">${t("exportSettings")}</button>
+        <button class="scene-btn" id="loadColorSettingsBtn" type="button">${t("loadSettings")}</button>
+      </div>
       <label>${t("colorSpeed")} <input id="colorSpeed" type="range" min="2" max="30" value="10" step="0.5"></label>
       <label>${t("colorOpacity")} <input id="colorOpacity" type="range" min="0" max="1" value="1" step="0.01"></label>
       <label>${t("colorTransition")}
@@ -2855,10 +2883,17 @@
     </div>
     <div class="tab-content" id="sceneControls">
       <input id="backgroundInput" type="file" accept="image/*">
+      <input id="settingsInput" type="file" accept=".json,application/json">
       <div class="scene-actions">
         <button class="scene-btn" id="uploadBackgroundBtn" type="button">${t("uploadBackground")}</button>
         <button class="scene-btn" id="removeBackgroundBtn" type="button">${t("removeBackground")}</button>
       </div>
+      <label>${t("sceneAnimationType")}
+        <select id="sceneAnimationMode">
+          <option value="animation">${t("sceneAnimationNormal")}</option>
+          <option value="color">${t("sceneAnimationColor")}</option>
+        </select>
+      </label>
       <label>${t("frameRatio")}
         <select id="frameRatio">
           <option value="16:9">16:9</option>
@@ -2905,7 +2940,9 @@
     const colorOpacity = document.getElementById("colorOpacity");
     const sceneControls = document.getElementById("sceneControls");
     const backgroundInput = document.getElementById("backgroundInput");
+    const settingsInput = document.getElementById("settingsInput");
     const backgroundColor = document.getElementById("backgroundColor");
+    const sceneAnimationMode = document.getElementById("sceneAnimationMode");
     const uploadBackgroundBtn = document.getElementById("uploadBackgroundBtn");
     const removeBackgroundBtn = document.getElementById("removeBackgroundBtn");
     const frameRatio = document.getElementById("frameRatio");
@@ -2930,6 +2967,69 @@
       point.id,
       version.points[(index + 1) % version.points.length]?.color || point.color
     ]));
+    let pendingSettingsType = "animation";
+    function animationSettings() {
+      return Object.fromEntries(Object.entries(controls).map(([key, input]) => [key, input.value]));
+    }
+    function colorSettings() {
+      return {
+        speed: colorSpeed.value,
+        opacity: colorOpacity.value,
+        targetColors: { ...targetColors }
+      };
+    }
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(link.href);
+        link.remove();
+      }, 2000);
+    }
+    function exportSettings(type) {
+      downloadJson("orb-" + type + "-settings.json", {
+        kind: "orb-editor-" + type + "-settings",
+        exportedAt: new Date().toISOString(),
+        animation: animationSettings(),
+        color: colorSettings()
+      });
+    }
+    function openSettingsFile(type) {
+      pendingSettingsType = type;
+      settingsInput.value = "";
+      settingsInput.click();
+    }
+    function applyImportedSettings(data, type) {
+      const animation = data.animation || (type === "animation" ? data : null);
+      const color = data.color || (type === "color" ? data : null);
+      if (type === "animation" && animation) {
+        Object.entries(animation).forEach(([key, value]) => {
+          if (controls[key]) controls[key].value = value;
+        });
+      }
+      if (type === "color" && color) {
+        if (color.speed != null) colorSpeed.value = color.speed;
+        if (color.opacity != null) colorOpacity.value = color.opacity;
+        if (color.targetColors) {
+          Object.entries(color.targetColors).forEach(([id, value]) => {
+            if (Object.prototype.hasOwnProperty.call(targetColors, id)) targetColors[id] = value;
+          });
+        }
+        renderColorControls();
+      }
+      apply();
+      applyColorTransition();
+    }
+    function usesColorTransition() {
+      return activeTab === "color" || (activeTab === "scene" && sceneAnimationMode.value === "color");
+    }
+    function syncSceneAnimationMode() {
+      sphere.classList.toggle("color-mode", usesColorTransition());
+    }
     document.getElementById("closeBtn").addEventListener("click", () => {
       if (window.opener && !window.opener.closed) window.opener.focus();
       window.location.href = editorUrl;
@@ -2942,6 +3042,15 @@
     function rgba(hex, alpha) {
       const { r, g, b } = hexToRgb(hex);
       return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+    }
+    function mixHex(from, to, amount) {
+      const a = hexToRgb(from);
+      const b = hexToRgb(to);
+      const t = Math.max(0, Math.min(1, Number(amount) || 0));
+      const channel = key => Math.round(a[key] + (b[key] - a[key]) * t);
+      return "#" + [channel("r"), channel("g"), channel("b")]
+        .map(value => value.toString(16).padStart(2, "0"))
+        .join("");
     }
     function svgArcForPoint(point, x = point.x, y = point.y, alpha = point.alpha) {
       const blur = Math.max(0.5, Number(point.blur ?? 58) / 12);
@@ -3052,6 +3161,7 @@
       sphere.style.setProperty("--color-bg-size", buildBackgroundSize());
       sphere.style.setProperty("--color-speed", colorSpeed.value + "s");
       sphere.style.setProperty("--color-opacity", colorOpacity.value);
+      syncSceneAnimationMode();
       syncRangeFill(colorSpeed);
       syncRangeFill(colorOpacity);
       if (activeTab === "color") {
@@ -3109,7 +3219,7 @@
       animationControls.classList.toggle("active", isAnimation);
       colorControls.classList.toggle("active", isColor);
       sceneControls.classList.toggle("active", isScene);
-      sphere.classList.toggle("color-mode", isColor);
+      syncSceneAnimationMode();
       if (!isScene) {
         backgroundColor.value = "#f7f7f8";
         sceneFrame.style.backgroundColor = "#f7f7f8";
@@ -3125,6 +3235,7 @@
         code.value = isColor ? buildColorCode() : buildCode();
       } else {
         backgroundColor.value = sceneBackgroundColor;
+        syncSceneAnimationMode();
         requestAnimationFrame(fitSceneFrame);
       }
     }
@@ -3158,7 +3269,7 @@
       layerCtx.fill();
       return layer;
     }
-    function drawRecordedOrb(ctx, centerX, centerY, diameter, phase) {
+    function drawRecordedOrb(ctx, centerX, centerY, diameter, phase, colorPhase = null) {
       const shift = Number(controls.shift.value);
       const pulse = Number(controls.glowPulse.value);
       const glowMove = Number(controls.glowMove.value);
@@ -3193,6 +3304,7 @@
       ctx.fillStyle = baseSheen;
       ctx.fillRect(centerX - diameter / 2, centerY + floatingY - diameter / 2, diameter, diameter);
 
+      const colorBlend = colorPhase == null ? 0 : ((1 - Math.cos(colorPhase)) / 2) * Number(colorOpacity.value);
       [...version.points].reverse().forEach((point, reverseIndex) => {
         const index = version.points.length - 1 - reverseIndex;
         const angle = phase + index * 0.82;
@@ -3201,9 +3313,10 @@
         const pointX = centerX - diameter / 2 + diameter * (Number(point.x) + driftX) / 100;
         const pointY = centerY + floatingY - diameter / 2 + diameter * (Number(point.y) + driftY) / 100;
         const radius = diameter * Number(point.radius) / 100;
+        const pointColor = colorPhase == null ? point.color : mixHex(point.color, targetColors[point.id] || point.color, colorBlend);
         if (point.shape === "arc") {
           const crescentRadius = Math.min(diameter * 0.42, Math.max(diameter * 0.1, radius * 0.56));
-          const layer = drawCrescentLayer(ctx.canvas.width, ctx.canvas.height, point, pointX, pointY, crescentRadius, point.alpha);
+          const layer = drawCrescentLayer(ctx.canvas.width, ctx.canvas.height, { ...point, color: pointColor }, pointX, pointY, crescentRadius, point.alpha);
           ctx.save();
           ctx.filter = "blur(" + Math.max(0.5, Number(point.blur || 58) * diameter / 3600) + "px)";
           ctx.drawImage(layer, 0, 0);
@@ -3214,9 +3327,9 @@
         const core = Math.max(0, Math.round(point.radius * (0.58 - softness * 0.0048)));
         const mid = Math.max(core + 1, Math.round(point.radius * (0.72 + softness * 0.0015)));
         const gradient = ctx.createRadialGradient(pointX, pointY, 0, pointX, pointY, radius);
-        gradient.addColorStop(Math.min(0.98, core / Math.max(1, Number(point.radius))), rgba(point.color, point.alpha));
-        gradient.addColorStop(Math.min(0.99, mid / Math.max(1, Number(point.radius))), rgba(point.color, point.alpha * 0.58));
-        gradient.addColorStop(1, rgba(point.color, 0));
+        gradient.addColorStop(Math.min(0.98, core / Math.max(1, Number(point.radius))), rgba(pointColor, point.alpha));
+        gradient.addColorStop(Math.min(0.99, mid / Math.max(1, Number(point.radius))), rgba(pointColor, point.alpha * 0.58));
+        gradient.addColorStop(1, rgba(pointColor, 0));
         ctx.fillStyle = gradient;
         ctx.fillRect(centerX - diameter / 2, centerY + floatingY - diameter / 2, diameter, diameter);
       });
@@ -3284,7 +3397,7 @@
       const centerX = frameCanvas.width * Number(orbX.value) / 100;
       const centerY = frameCanvas.height * Number(orbY.value) / 100;
       // Canvas rendering avoids Safari foreignObject artifacts in PNG and video exports.
-      drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase);
+      drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase, sceneAnimationMode.value === "color" ? phase : null);
       targetCtx.clearRect(0, 0, dimensions.width, dimensions.height);
       targetCtx.drawImage(frameCanvas, 0, 0);
     }
@@ -3418,6 +3531,7 @@
       sphere.style.setProperty("--shape-c", (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%");
       Object.values(controls).forEach(syncRangeFill);
       [orbSize, orbX, orbY, videoDuration].forEach(syncRangeFill);
+      syncSceneAnimationMode();
       applyColorTransition();
       if (activeTab === "scene") fitSceneFrame();
       code.value = activeTab === "color" ? buildColorCode() : buildCode();
@@ -3427,7 +3541,7 @@
       const duration = Math.max(0.1, Number(controls.speed.value)) * 1000;
       const shift = Number(controls.shift.value);
       const phase = ((now - animationStart) / duration) * Math.PI * 2;
-      sphere.style.setProperty("--sphere-bg", activeTab === "color" ? buildBackground() : buildBackground(phase, shift));
+      sphere.style.setProperty("--sphere-bg", usesColorTransition() ? buildBackground() : buildBackground(phase, shift));
       requestAnimationFrame(tick);
     }
     function buildColorCode() {
@@ -3476,6 +3590,20 @@
     }
     Object.values(controls).forEach(input => input.addEventListener("input", apply));
     [colorSpeed, colorOpacity].forEach(input => input.addEventListener("input", applyColorTransition));
+    document.getElementById("exportAnimationSettingsBtn").addEventListener("click", () => exportSettings("animation"));
+    document.getElementById("loadAnimationSettingsBtn").addEventListener("click", () => openSettingsFile("animation"));
+    document.getElementById("exportColorSettingsBtn").addEventListener("click", () => exportSettings("color"));
+    document.getElementById("loadColorSettingsBtn").addEventListener("click", () => openSettingsFile("color"));
+    settingsInput.addEventListener("change", async () => {
+      const file = settingsInput.files && settingsInput.files[0];
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        applyImportedSettings(data, pendingSettingsType);
+      } catch (error) {
+        alert(${JSON.stringify(t("settingsImportError"))});
+      }
+    });
     [orbSize, orbX, orbY].forEach(input => input.addEventListener("input", () => {
       syncRangeFill(input);
       fitSceneFrame();
@@ -3484,6 +3612,10 @@
     animationTab.addEventListener("click", () => setTab("animation"));
     colorTab.addEventListener("click", () => setTab("color"));
     sceneTab.addEventListener("click", () => setTab("scene"));
+    sceneAnimationMode.addEventListener("change", () => {
+      syncSceneAnimationMode();
+      apply();
+    });
     uploadBackgroundBtn.addEventListener("click", () => backgroundInput.click());
     removeBackgroundBtn.addEventListener("click", () => {
       if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
