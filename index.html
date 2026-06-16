@@ -1704,7 +1704,7 @@
         animationTitle: "Анимация шара",
         speed: "Скорость, сек",
         gradientMove: "Перемещение градиентов, %",
-        rotation: "Вращение, градусы",
+        rotation: "Скорость вращения, сек",
         verticalMove: "Вертикальное движение, px",
         glowMove: "Движение подсветки, px",
         glowPulse: "Пульсация подсветки",
@@ -1793,7 +1793,7 @@
         animationTitle: "Orb animation",
         speed: "Speed, sec",
         gradientMove: "Gradient movement, %",
-        rotation: "Rotation, degrees",
+        rotation: "Rotation speed, sec",
         verticalMove: "Vertical movement, px",
         glowMove: "Glow movement, px",
         glowPulse: "Glow pulse",
@@ -2421,6 +2421,8 @@
       background-position: var(--pos-a);
       background-repeat: no-repeat;
       box-shadow: var(--sphere-shadow);
+      rotate: var(--orb-rotation, 0deg);
+      transform-origin: center;
       animation: bubble-motion var(--speed) ease-in-out infinite;
     }
     .sphere::after {
@@ -2790,28 +2792,28 @@
       0% {
         background-position: var(--pos-a);
         background-size: var(--size-a);
-        transform: translateY(0) rotate(0deg) scale(1);
+        transform: translateY(0) scale(1);
         border-radius: var(--shape-a);
         filter: saturate(1.08) brightness(1);
       }
       45% {
         background-position: var(--pos-b);
         background-size: var(--size-b);
-        transform: translateY(var(--float)) rotate(var(--turn-mid)) scale(1.006);
+        transform: translateY(var(--float)) scale(1.006);
         border-radius: var(--shape-b);
         filter: saturate(1.14) brightness(1.025);
       }
       72% {
         background-position: var(--pos-c);
         background-size: var(--size-c);
-        transform: translateY(var(--float-half)) rotate(var(--turn-partial)) scale(0.998);
+        transform: translateY(var(--float-half)) scale(0.998);
         border-radius: var(--shape-c);
         filter: saturate(1.1) brightness(1.01);
       }
       100% {
         background-position: var(--pos-a);
         background-size: var(--size-a);
-        transform: translateY(0) rotate(var(--turn-full)) scale(1);
+        transform: translateY(0) scale(1);
         border-radius: var(--shape-a);
         filter: saturate(1.08) brightness(1);
       }
@@ -2870,7 +2872,7 @@
       </div>
       <label>${t("speed")} <input id="speed" type="range" min="2" max="20" value="8" step="0.5"></label>
       <label>${t("gradientMove")} <input id="shift" type="range" min="0" max="36" value="18" step="1"></label>
-      <label>${t("rotation")} <input id="rotation" type="range" min="0" max="360" value="38" step="1"></label>
+      <label>${t("rotation")} <input id="rotation" type="range" min="10" max="90" value="36" step="1"></label>
       <label>${t("verticalMove")} <input id="float" type="range" min="0" max="18" value="3" step="1"></label>
       <label>${t("glowMove")} <input id="glowMove" type="range" min="0" max="40" value="12" step="1"></label>
       <label>${t("glowPulse")} <input id="glowPulse" type="range" min="0" max="0.55" value="0.14" step="0.01"></label>
@@ -3279,7 +3281,7 @@
       layerCtx.fill();
       return layer;
     }
-    function drawRecordedOrb(ctx, centerX, centerY, diameter, phase, colorPhase = null) {
+    function drawRecordedOrb(ctx, centerX, centerY, diameter, phase, colorPhase = null, elapsedMs = 0) {
       const shift = Number(controls.shift.value);
       const pulse = Number(controls.glowPulse.value);
       const glowMove = Number(controls.glowMove.value);
@@ -3298,7 +3300,8 @@
 
       const shape = Number(controls.shape.value) / 400;
       const shapeWave = Math.sin(phase) * shape;
-      const rotationAngle = phase * Number(controls.rotation.value) / 360;
+      const rotationDuration = Math.max(10, Number(controls.rotation.value)) * 1000;
+      const rotationAngle = (elapsedMs / rotationDuration) * Math.PI * 2;
       ctx.save();
       ctx.translate(centerX, centerY + floatingY);
       ctx.rotate(rotationAngle);
@@ -3399,7 +3402,7 @@
       ];
       return types.find(type => window.MediaRecorder && MediaRecorder.isTypeSupported(type)) || "";
     }
-    async function drawCompleteSceneFrame(targetCtx, dimensions, phase) {
+    async function drawCompleteSceneFrame(targetCtx, dimensions, phase, elapsedMs = 0) {
       const frameCanvas = document.createElement("canvas");
       frameCanvas.width = dimensions.width;
       frameCanvas.height = dimensions.height;
@@ -3409,7 +3412,7 @@
       const centerX = frameCanvas.width * Number(orbX.value) / 100;
       const centerY = frameCanvas.height * Number(orbY.value) / 100;
       // Canvas rendering avoids Safari foreignObject artifacts in PNG and video exports.
-      drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase, sceneAnimationMode.value === "color" ? phase : null);
+      drawRecordedOrb(frameCtx, centerX, centerY, diameter, phase, sceneAnimationMode.value === "color" ? phase : null, elapsedMs);
       targetCtx.clearRect(0, 0, dimensions.width, dimensions.height);
       targetCtx.drawImage(frameCanvas, 0, 0);
     }
@@ -3422,7 +3425,7 @@
       const duration = Math.max(0.1, Number(controls.speed.value)) * 1000;
       const phase = ((performance.now() - animationStart) / duration) * Math.PI * 2;
       savePngBtn.disabled = true;
-      await drawCompleteSceneFrame(ctx, dimensions, phase);
+      await drawCompleteSceneFrame(ctx, dimensions, phase, performance.now() - animationStart);
       canvas.toBlob(blob => {
         if (!blob) {
           savePngBtn.disabled = false;
@@ -3468,7 +3471,7 @@
         if (event.data && event.data.size) chunks.push(event.data);
       };
       const duration = Number(videoDuration.value) * 1000;
-      await drawCompleteSceneFrame(ctx, dimensions, 0);
+      await drawCompleteSceneFrame(ctx, dimensions, 0, 0);
       const startedAt = performance.now();
       const finished = new Promise(resolve => recorder.addEventListener("stop", resolve, { once: true }));
       recorder.start(250);
@@ -3481,7 +3484,7 @@
         drawingFrame = true;
         const elapsed = now - startedAt;
         const phase = (elapsed / (Math.max(0.1, Number(controls.speed.value)) * 1000)) * Math.PI * 2;
-        await drawCompleteSceneFrame(ctx, dimensions, phase);
+        await drawCompleteSceneFrame(ctx, dimensions, phase, elapsed);
         drawingFrame = false;
         if (elapsed < duration) requestAnimationFrame(drawFrame);
         else recorder.stop();
@@ -3509,7 +3512,6 @@
       const shift = Number(controls.shift.value);
       const shape = Number(controls.shape.value);
       const pulse = Number(controls.glowPulse.value);
-      const turn = Number(controls.rotation.value);
       wrap.style.setProperty("--glow-color", rgba(version.glow.color, version.glow.alpha));
       wrap.style.setProperty("--glow-blur", version.glow.blur + "px");
       wrap.style.setProperty("--glow-size", version.glow.size + "%");
@@ -3533,9 +3535,6 @@
       sphere.style.setProperty("--size-a", buildBackgroundSize());
       sphere.style.setProperty("--size-b", buildBackgroundSize());
       sphere.style.setProperty("--size-c", buildBackgroundSize());
-      sphere.style.setProperty("--turn-mid", (turn * 0.45) + "deg");
-      sphere.style.setProperty("--turn-partial", (turn * 0.72) + "deg");
-      sphere.style.setProperty("--turn-full", turn + "deg");
       sphere.style.setProperty("--float", "-" + controls.float.value + "px");
       sphere.style.setProperty("--float-half", "-" + (Number(controls.float.value) / 2) + "px");
       sphere.style.setProperty("--shape-a", (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%");
@@ -3551,9 +3550,12 @@
     let animationStart = performance.now();
     function tick(now) {
       const duration = Math.max(0.1, Number(controls.speed.value)) * 1000;
+      const rotationDuration = Math.max(10, Number(controls.rotation.value)) * 1000;
       const shift = Number(controls.shift.value);
-      const phase = ((now - animationStart) / duration) * Math.PI * 2;
+      const elapsed = now - animationStart;
+      const phase = (elapsed / duration) * Math.PI * 2;
       sphere.style.setProperty("--sphere-bg", buildBackground(phase, shift));
+      sphere.style.setProperty("--orb-rotation", ((elapsed / rotationDuration) * 360 % 360) + "deg");
       if (usesColorTransition()) {
         sphere.style.setProperty("--color-bg-target", buildBackground(phase, shift, targetColors));
       }
@@ -3593,13 +3595,11 @@
       const shapeA = (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%";
       const shapeB = (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%";
       const shapeC = (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%";
-      const turn = Number(controls.rotation.value);
-      const turnMid = turn * 0.45;
-      const turnPartial = turn * 0.72;
       return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: 300px;\\n  height: 300px;\\n}\\n\\n" +
         ".hologram-sphere-wrap::before {\\n  content: \\"\\";\\n  position: absolute;\\n  left: " + version.glow.x + "%;\\n  top: " + version.glow.y + "%;\\n  width: " + version.glow.size + "%;\\n  aspect-ratio: 1;\\n  border-radius: 50%;\\n  background: radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%), conic-gradient(from 0deg, " + rgba(version.glow.color, version.glow.alpha) + ", transparent 28%, " + rgba(version.glow.color, version.glow.alpha) + " 56%, transparent 78%, " + rgba(version.glow.color, version.glow.alpha) + ");\\n  filter: blur(" + version.glow.blur + "px) saturate(1.28);\\n  transform: translate(-50%, -50%);\\n  animation: glow-drift " + controls.glowSpin.value + "s linear infinite;\\n}\\n\\n" +
-        ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: 300px;\\n  height: 300px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite;\\n}\\n\\n" +
-        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) rotate(0deg) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) rotate(" + turnMid + "deg) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) rotate(" + turnPartial + "deg) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) rotate(" + turn + "deg) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
+        ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: 300px;\\n  height: 300px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  transform-origin: center;\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite, orb-spin " + controls.rotation.value + "s linear infinite;\\n}\\n\\n" +
+        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
+        "@keyframes orb-spin {\\n  from { rotate: 0deg; }\\n  to { rotate: 360deg; }\\n}\\n\\n" +
         "@keyframes glow-drift {\\n  0% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(0deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n  50% { transform: translate(calc(-50% + " + controls.glowMove.value + "px), calc(-50% - " + (Number(controls.glowMove.value) / 3) + "px)) rotate(180deg); opacity: " + Math.max(0.28, 0.86 - Number(controls.glowPulse.value)).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.45) hue-rotate(" + Math.round(10 + Number(controls.glowPulse.value) * 80) + "deg); }\\n  100% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(360deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n}\\n";
     }
     Object.values(controls).forEach(input => input.addEventListener("input", apply));
