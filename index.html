@@ -3582,22 +3582,13 @@
       requestAnimationFrame(tick);
     }
     function buildColorCode() {
-      const sizePx = Number(version.sizePx || 300);
-      return ".hologram-sphere {\\n" +
-        "  position: relative;\\n" +
-        "  width: " + sizePx + "px;\\n" +
-        "  height: " + sizePx + "px;\\n" +
-        "  border-radius: 50%;\\n" +
-        "  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n" +
-        "  background-image: " + buildBackground() + ";\\n" +
-        "  background-size: " + buildBackgroundSize() + ";\\n" +
-        "  box-shadow: " + shadows.large.join(", ") + ";\\n" +
-        "}\\n\\n" +
+      return buildCode() + "\\n" +
         ".hologram-sphere::after {\\n" +
         "  content: \\"\\";\\n" +
         "  position: absolute;\\n" +
         "  inset: 0;\\n" +
         "  border-radius: inherit;\\n" +
+        "  pointer-events: none;\\n" +
         "  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n" +
         "  background-image: " + buildBackground(0, 0, targetColors) + ";\\n" +
         "  background-size: " + buildBackgroundSize() + ";\\n" +
