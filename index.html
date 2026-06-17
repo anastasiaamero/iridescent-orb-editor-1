@@ -259,8 +259,8 @@
 
     .sphere-wrap {
       position: relative;
-      width: 286px;
-      height: 286px;
+      width: var(--orb-size, 300px);
+      height: var(--orb-size, 300px);
       display: grid;
       place-items: center;
     }
@@ -281,8 +281,8 @@
 
     .sphere {
       position: relative;
-      width: 286px;
-      height: 286px;
+      width: var(--orb-size, 300px);
+      height: var(--orb-size, 300px);
       border-radius: 50%;
       background-color: var(--sphere-base, #fff);
       background-image: var(--sphere-bg);
@@ -1599,6 +1599,7 @@
           <div class="field-grid">
             <label><span data-i18n="baseColor">Цвет подложки</span> <input id="baseColorInput" type="color"></label>
             <label><span data-i18n="baseOpacity">Прозрачность подложки</span> <input id="baseAlphaInput" type="range" min="0" max="1" step="0.01"></label>
+            <label><span data-i18n="orbPixelSize">Размер шара, px</span> <input id="orbSizePxInput" type="number" min="24" max="800" step="1"></label>
             <label><span data-i18n="color">Цвет</span> <input id="glowColorInput" type="color"></label>
             <label><span data-i18n="transparency">Прозрачность</span> <input id="glowAlphaInput" type="range" min="0" max="0.8" step="0.01"></label>
             <label><span data-i18n="blurPx">Размытие, px</span> <input id="glowBlurInput" type="range" min="0" max="90" step="1"></label>
@@ -1678,6 +1679,7 @@
         glowSection: "Подложка и подсветка",
         baseColor: "Цвет подложки",
         baseOpacity: "Прозрачность подложки",
+        orbPixelSize: "Размер шара, px",
         outlineSection: "Обводка шара",
         outlineName: "Обводка",
         transparency: "Прозрачность",
@@ -1767,6 +1769,7 @@
         glowSection: "Base and glow",
         baseColor: "Base color",
         baseOpacity: "Base opacity",
+        orbPixelSize: "Orb size, px",
         outlineSection: "Orb outline",
         outlineName: "Outline",
         transparency: "Transparency",
@@ -1864,6 +1867,7 @@
       color: document.getElementById("baseColorInput"),
       alpha: document.getElementById("baseAlphaInput")
     };
+    const orbSizePxInput = document.getElementById("orbSizePxInput");
     const pointSection = document.getElementById("pointSection");
     const glowSection = document.getElementById("glowSection");
     const layersSection = document.getElementById("layersSection");
@@ -1882,6 +1886,7 @@
     let glow = { ...defaultGlow };
     let base = { ...defaultBase };
     let outline = { ...defaultOutline };
+    let orbSizePx = 300;
     let versions = loadVersions();
     let selectedId = points[0].id;
     let draggedPointId = null;
@@ -1900,7 +1905,7 @@
       });
       document.getElementById("langToggle").textContent = currentLang === "ru" ? "EN" : "RU";
       mobileMenuLang.textContent = currentLang === "ru" ? "EN" : "RU";
-      document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
+      document.getElementById("smallBtn").textContent = normalizedOrbSize() === 66 ? t("largeCss") : t("smallCss");
       localStorage.setItem("orb-gradient-editor-lang", currentLang);
       renderList();
       renderVersions();
@@ -1926,10 +1931,15 @@
       return point.nameEn || fallback?.nameEn || point.name;
     }
 
-    function buildShadow(size = cssSize, sourceOutline = outline) {
-      const isSmall = size === "small";
+    function normalizedOrbSize(value = orbSizePx) {
+      return Math.max(24, Math.min(800, Math.round(Number(value) || 300)));
+    }
+
+    function buildShadow(size = orbSizePx, sourceOutline = outline) {
+      const pixelSize = size === "small" ? 66 : size === "large" ? normalizedOrbSize() : normalizedOrbSize(size);
+      const isSmall = pixelSize <= 100;
       const base = isSmall ? smallShadow : largeShadow;
-      const scale = isSmall ? 0.22 : 1;
+      const scale = pixelSize / 300;
       const blur = Math.max(0, Math.round(sourceOutline.blur * scale));
       const spread = Math.max(0, Number((sourceOutline.spread * scale).toFixed(2)));
       return [
@@ -1995,11 +2005,12 @@
     }
 
     function buildCss(size = cssSize) {
-      const isSmall = size === "small";
-      const shadow = buildShadow(size);
-      const width = isSmall ? "66px" : "300px";
-      const move = isSmall ? "-1px" : "-3px";
-      const glowScale = isSmall ? 0.22 : 1;
+      const pixelSize = size === "small" ? 66 : normalizedOrbSize();
+      const shadow = buildShadow(pixelSize);
+      const width = `${pixelSize}px`;
+      const scale = pixelSize / 300;
+      const move = `${Math.round(-3 * scale * 100) / 100}px`;
+      const glowScale = scale;
       return `.hologram-sphere-wrap {
   position: relative;
   width: ${width};
@@ -2088,7 +2099,8 @@
         points: clone(points),
         glow: { ...glow },
         base: { ...base },
-        outline: { ...outline }
+        outline: { ...outline },
+        sizePx: normalizedOrbSize()
       };
     }
 
@@ -2102,6 +2114,7 @@
           glow: { ...glow },
           base: { ...base },
           outline: { ...outline },
+          sizePx: normalizedOrbSize(),
           cssSize
         },
         versions: clone(versions),
@@ -2146,13 +2159,14 @@
       glow = { ...defaultGlow, ...(settings.glow || {}) };
       base = { ...defaultBase, ...(settings.base || {}) };
       outline = { ...defaultOutline, ...(settings.outline || {}) };
-      cssSize = settings.cssSize === "small" ? "small" : "large";
+      orbSizePx = normalizedOrbSize(settings.sizePx ?? (settings.cssSize === "small" ? 66 : 300));
+      cssSize = orbSizePx === 66 ? "small" : "large";
       if (Array.isArray(data?.versions)) {
         versions = clone(data.versions).slice(0, 12);
         saveVersions();
       }
       selectedId = points[0].id;
-      document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
+      document.getElementById("smallBtn").textContent = normalizedOrbSize() === 66 ? t("largeCss") : t("smallCss");
       render();
     }
 
@@ -2256,6 +2270,8 @@
       glow = { ...defaultGlow, ...version.glow };
       base = { ...defaultBase, ...version.base };
       outline = { ...defaultOutline, ...version.outline };
+      orbSizePx = normalizedOrbSize(version.sizePx ?? 300);
+      cssSize = orbSizePx === 66 ? "small" : "large";
       selectedId = points[0]?.id;
       render();
     }
@@ -2269,6 +2285,7 @@
     function buildAnimationHtml(version) {
       version = {
         ...version,
+        sizePx: normalizedOrbSize(version.sizePx ?? 300),
         base: { ...defaultBase, ...version.base },
         outline: { ...defaultOutline, ...version.outline }
       };
@@ -2277,8 +2294,8 @@
       returnUrl.searchParams.set("skipIntro", "1");
       const editorUrl = JSON.stringify(returnUrl.href).replace(/</g, "\\u003c");
       const shadows = {
-        large: buildShadow("large", version.outline),
-        small: buildShadow("small", version.outline),
+        large: buildShadow(version.sizePx, version.outline),
+        small: buildShadow(66, version.outline),
         baseGradient
       };
       const shadowJson = JSON.stringify(shadows).replace(/</g, "\\u003c");
@@ -2388,8 +2405,8 @@
     }
     .sphere-wrap {
       position: relative;
-      width: 300px;
-      height: 300px;
+      width: ${version.sizePx}px;
+      height: ${version.sizePx}px;
       transform-origin: center;
     }
     .sphere-wrap::before {
@@ -2412,8 +2429,8 @@
     .sphere {
       position: relative;
       z-index: 1;
-      width: 300px;
-      height: 300px;
+      width: ${version.sizePx}px;
+      height: ${version.sizePx}px;
       border-radius: 50%;
       background-color: var(--sphere-base);
       background-image: var(--sphere-bg);
@@ -3206,7 +3223,7 @@
       sceneFrame.style.width = width + "px";
       sceneFrame.style.height = height + "px";
       sceneFrame.style.aspectRatio = dimensions.width + " / " + dimensions.height;
-      const scale = (Math.min(width, height) * Number(orbSize.value) / 100) / 300;
+      const scale = (Math.min(width, height) * Number(orbSize.value) / 100) / Number(version.sizePx || 300);
       wrap.style.left = orbX.value + "%";
       wrap.style.top = orbY.value + "%";
       wrap.style.position = activeTab === "scene" ? "absolute" : "relative";
@@ -3562,10 +3579,11 @@
       requestAnimationFrame(tick);
     }
     function buildColorCode() {
+      const sizePx = Number(version.sizePx || 300);
       return ".hologram-sphere {\\n" +
         "  position: relative;\\n" +
-        "  width: 300px;\\n" +
-        "  height: 300px;\\n" +
+        "  width: " + sizePx + "px;\\n" +
+        "  height: " + sizePx + "px;\\n" +
         "  border-radius: 50%;\\n" +
         "  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n" +
         "  background-image: " + buildBackground() + ";\\n" +
@@ -3590,14 +3608,15 @@
         "}";
     }
     function buildCode() {
+      const sizePx = Number(version.sizePx || 300);
       const shift = Number(controls.shift.value);
       const shape = Number(controls.shape.value);
       const shapeA = (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%";
       const shapeB = (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%";
       const shapeC = (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%";
-      return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: 300px;\\n  height: 300px;\\n}\\n\\n" +
+      return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n}\\n\\n" +
         ".hologram-sphere-wrap::before {\\n  content: \\"\\";\\n  position: absolute;\\n  left: " + version.glow.x + "%;\\n  top: " + version.glow.y + "%;\\n  width: " + version.glow.size + "%;\\n  aspect-ratio: 1;\\n  border-radius: 50%;\\n  background: radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%), conic-gradient(from 0deg, " + rgba(version.glow.color, version.glow.alpha) + ", transparent 28%, " + rgba(version.glow.color, version.glow.alpha) + " 56%, transparent 78%, " + rgba(version.glow.color, version.glow.alpha) + ");\\n  filter: blur(" + version.glow.blur + "px) saturate(1.28);\\n  transform: translate(-50%, -50%);\\n  animation: glow-drift " + controls.glowSpin.value + "s linear infinite;\\n}\\n\\n" +
-        ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: 300px;\\n  height: 300px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  transform-origin: center;\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite, orb-spin " + controls.rotation.value + "s linear infinite;\\n}\\n\\n" +
+        ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  transform-origin: center;\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite, orb-spin " + controls.rotation.value + "s linear infinite;\\n}\\n\\n" +
         "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
         "@keyframes orb-spin {\\n  from { rotate: 0deg; }\\n  to { rotate: 360deg; }\\n}\\n\\n" +
         "@keyframes glow-drift {\\n  0% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(0deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n  50% { transform: translate(calc(-50% + " + controls.glowMove.value + "px), calc(-50% - " + (Number(controls.glowMove.value) / 3) + "px)) rotate(180deg); opacity: " + Math.max(0.28, 0.86 - Number(controls.glowPulse.value)).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.45) hue-rotate(" + Math.round(10 + Number(controls.glowPulse.value) * 80) + "deg); }\\n  100% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(360deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n}\\n";
@@ -3903,6 +3922,7 @@
       glowFields.y.value = glow.y;
       baseFields.color.value = base.color;
       baseFields.alpha.value = base.alpha;
+      orbSizePxInput.value = normalizedOrbSize();
       return;
       }
 
@@ -3925,14 +3945,17 @@
       glowFields.y.value = glow.y;
       baseFields.color.value = base.color;
       baseFields.alpha.value = base.alpha;
+      orbSizePxInput.value = normalizedOrbSize();
     }
 
     function applySphere() {
+      const size = normalizedOrbSize();
+      sphereWrap.style.setProperty("--orb-size", `${size}px`);
       sphere.style.setProperty("--sphere-bg", buildBackground());
       sphere.style.setProperty("--sphere-base", rgba(base.color, base.alpha));
       sphere.style.setProperty("--sphere-bg-size", buildBackgroundSize());
       sphere.style.setProperty("--sphere-bg-position", buildPosition(0));
-      sphere.style.setProperty("--sphere-shadow", buildShadow("large").join(", "));
+      sphere.style.setProperty("--sphere-shadow", buildShadow(size).join(", "));
       sphereWrap.style.setProperty("--glow-color", rgba(glow.color, glow.alpha));
       sphereWrap.style.setProperty("--glow-blur", `${glow.blur}px`);
       sphereWrap.style.setProperty("--glow-size", `${glow.size}%`);
@@ -3944,6 +3967,7 @@
       const css = buildCss(cssSize);
       cssOutput.value = css;
       renderCssCode(css);
+      document.getElementById("smallBtn").textContent = normalizedOrbSize() === 66 ? t("largeCss") : t("smallCss");
     }
 
     function syncRangeFills() {
@@ -4080,6 +4104,12 @@
       });
     });
 
+    orbSizePxInput.addEventListener("input", () => {
+      orbSizePx = normalizedOrbSize(orbSizePxInput.value);
+      cssSize = orbSizePx === 66 ? "small" : "large";
+      render();
+    });
+
     document.getElementById("addBtn").addEventListener("click", () => {
       const id = `point${Date.now()}`;
       points.push({ id, name: t("newPoint"), x: 50, y: 50, color: "#b9d7ff", alpha: 0.5, radius: 50, shape: "circle", angle: 0, blur: 58 });
@@ -4113,6 +4143,7 @@
       glow = { ...defaultGlow };
       base = { ...defaultBase };
       outline = { ...defaultOutline };
+      orbSizePx = 300;
       selectedId = points[0].id;
       render();
     });
@@ -4138,11 +4169,9 @@
     });
 
     document.getElementById("smallBtn").addEventListener("click", () => {
-      cssSize = cssSize === "small" ? "large" : "small";
-      document.getElementById("smallBtn").textContent = cssSize === "small" ? t("largeCss") : t("smallCss");
-      const css = buildCss(cssSize);
-      cssOutput.value = css;
-      renderCssCode(css);
+      orbSizePx = normalizedOrbSize(orbSizePx === 66 ? 300 : 66);
+      cssSize = orbSizePx === 66 ? "small" : "large";
+      render();
     });
 
     document.getElementById("langToggle").addEventListener("click", () => {
