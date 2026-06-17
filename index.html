@@ -1105,12 +1105,6 @@
         border-radius: 22px;
       }
 
-      .sphere-wrap,
-      .sphere {
-        width: min(78vw, 340px);
-        height: min(78vw, 340px);
-      }
-
       .point {
         width: 19px;
         height: 19px;
@@ -1933,6 +1927,15 @@
 
     function normalizedOrbSize(value = orbSizePx) {
       return Math.max(24, Math.min(800, Math.round(Number(value) || 300)));
+    }
+
+    function previewOrbSize(value = orbSizePx) {
+      const realSize = normalizedOrbSize(value);
+      const stageWidth = stage?.clientWidth || 344;
+      const comfortableSize = mobileQuery.matches
+        ? Math.min(340, Math.max(260, stageWidth - 24))
+        : Math.min(300, Math.max(240, stageWidth - 44));
+      return Math.max(realSize, comfortableSize);
     }
 
     function buildShadow(size = orbSizePx, sourceOutline = outline) {
@@ -3719,7 +3722,7 @@
           if (Date.now() < suppressPointClickUntil) return;
           select(point.id);
         });
-        (mobileQuery.matches ? sphereWrap : stage).append(marker);
+        sphereWrap.append(marker);
       });
     }
 
@@ -3950,7 +3953,7 @@
 
     function applySphere() {
       const size = normalizedOrbSize();
-      sphereWrap.style.setProperty("--orb-size", `${size}px`);
+      sphereWrap.style.setProperty("--orb-size", `${previewOrbSize(size)}px`);
       sphere.style.setProperty("--sphere-bg", buildBackground());
       sphere.style.setProperty("--sphere-base", rgba(base.color, base.alpha));
       sphere.style.setProperty("--sphere-bg-size", buildBackgroundSize());
@@ -4049,7 +4052,7 @@
       marker.setPointerCapture?.(event.pointerId);
       const move = pointerEvent => {
         if (Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY) > 5) moved = true;
-        const box = (mobileQuery.matches ? sphereWrap : stage).getBoundingClientRect();
+        const box = sphereWrap.getBoundingClientRect();
         const x = Math.max(0, Math.min(100, ((pointerEvent.clientX - box.left) / box.width) * 100));
         const y = Math.max(0, Math.min(100, ((pointerEvent.clientY - box.top) / box.height) * 100));
         points = points.map(point => point.id === id ? { ...point, x: Math.round(x), y: Math.round(y) } : point);
