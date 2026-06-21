@@ -492,6 +492,18 @@
       background: rgba(16, 17, 20, 0.16);
     }
 
+    .version-primary-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .version-primary-actions .action-btn {
+      min-width: 0;
+      padding-inline: 14px;
+    }
+
     .version-card {
       display: grid;
       gap: 10px;
@@ -1375,6 +1387,20 @@
         padding: 0 14px;
       }
 
+      .version-primary-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .versions-section .version-primary-actions .action-btn {
+        width: 100%;
+        min-height: var(--mobile-control-height);
+        padding: 0 10px;
+        border-radius: var(--mobile-control-radius);
+        font-size: 12px;
+      }
+
       .version-list {
         grid-auto-rows: 126px;
         gap: 10px;
@@ -1460,6 +1486,331 @@
       button:hover,
       .color-card:hover {
         transform: none;
+      }
+    }
+
+    .composition-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(32, 32, 32, 0.24);
+      backdrop-filter: blur(12px);
+    }
+
+    .composition-backdrop.open {
+      display: grid;
+    }
+
+    .composition-dialog {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      width: min(1180px, 100%);
+      height: min(760px, calc(100dvh - 36px));
+      overflow: hidden;
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: 0 26px 80px rgba(32, 32, 32, 0.2);
+    }
+
+    .composition-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 76px;
+      padding: 16px 20px 12px 26px;
+    }
+
+    .composition-head-copy {
+      min-width: 0;
+    }
+
+    .composition-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .composition-subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .composition-close {
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: var(--soft-strong);
+      color: var(--ink);
+      cursor: pointer;
+      font: 400 26px/1 Inter, sans-serif;
+    }
+
+    .composition-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(330px, 0.72fr);
+      gap: 16px;
+      min-height: 0;
+      padding: 0 16px 16px;
+    }
+
+    .composition-preview-panel,
+    .composition-controls {
+      min-height: 0;
+      border-radius: 22px;
+      background: var(--soft);
+    }
+
+    .composition-preview-panel {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .composition-preview {
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .composition-preview .orb-composition {
+      width: min(100%, 800px);
+    }
+
+    .composition-preview-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .composition-controls {
+      display: grid;
+      grid-template-rows: auto minmax(128px, .72fr) minmax(0, 1fr);
+      gap: 12px;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .composition-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .composition-section-title {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .composition-add,
+    .composition-copy,
+    .composition-code-toggle {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--soft-strong);
+      color: var(--ink);
+      cursor: pointer;
+      font: 750 13px/1 Inter, sans-serif;
+    }
+
+    .composition-copy {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .composition-layer-list {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .composition-layer-card {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 34px;
+      align-items: center;
+      gap: 8px;
+      min-height: 54px;
+      padding: 7px 8px;
+      border: 0;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .62);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .composition-layer-card.selected {
+      background: #fff;
+    }
+
+    .composition-drag-handle {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: var(--muted);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .composition-layer-name {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 760;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .composition-remove-layer {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 11px;
+      background: var(--soft-strong);
+      color: var(--ink);
+      cursor: pointer;
+      font: 400 20px/1 Inter, sans-serif;
+    }
+
+    .composition-layer-settings {
+      display: grid;
+      align-content: start;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      min-height: 0;
+      padding-top: 2px;
+      overflow-y: auto;
+    }
+
+    .composition-layer-settings .wide {
+      grid-column: 1 / -1;
+    }
+
+    .composition-layer-settings label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 730;
+    }
+
+    .composition-layer-settings select {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 13px;
+      background: #fff;
+      color: var(--ink);
+      font: 700 13px/1 Inter, sans-serif;
+    }
+
+    .composition-empty {
+      display: grid;
+      place-items: center;
+      min-height: 120px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .56);
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .composition-code {
+      display: none;
+      width: 100%;
+      height: 160px;
+      padding: 14px;
+      border: 0;
+      border-radius: 16px;
+      background: #fff;
+      resize: none;
+      color: var(--ink);
+      font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .composition-preview-panel.show-code {
+      grid-template-rows: minmax(180px, 1fr) 160px auto;
+    }
+
+    .composition-preview-panel.show-code .composition-code {
+      display: block;
+    }
+
+    @media (max-width: 760px) {
+      .composition-backdrop {
+        align-items: end;
+        padding: 0;
+      }
+
+      .composition-dialog {
+        width: 100%;
+        height: 94dvh;
+        border-radius: 24px 24px 0 0;
+      }
+
+      .composition-head {
+        min-height: 68px;
+        padding: 12px 14px 8px 18px;
+      }
+
+      .composition-subtitle {
+        display: none;
+      }
+
+      .composition-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        overflow-y: auto;
+        padding: 0 10px 18px;
+      }
+
+      .composition-preview-panel {
+        flex: 0 0 auto;
+        min-height: 300px;
+        padding: 10px;
+      }
+
+      .composition-preview {
+        min-height: 220px;
+      }
+
+      .composition-controls {
+        flex: 0 0 auto;
+        grid-template-rows: auto 180px auto;
+        min-height: 520px;
+        padding: 14px;
       }
     }
   </style>
@@ -1605,7 +1956,10 @@
 
         <section class="section versions-section">
           <p class="section-title" data-i18n="versionHistory">История версий</p>
-          <button class="action-btn primary" id="saveVersionBtn" type="button" data-i18n="saveCurrent">Сохранить текущую версию</button>
+          <div class="version-primary-actions">
+            <button class="action-btn primary" id="saveVersionBtn" type="button" data-i18n="saveCurrent">Сохранить текущую версию</button>
+            <button class="action-btn" id="openCompositionBtn" type="button" data-i18n="openComposition">Собрать композицию</button>
+          </div>
           <div class="version-list" id="versionList"></div>
         </section>
       </div>
@@ -1617,6 +1971,37 @@
       </div>
     </aside>
   </main>
+
+  <div class="composition-backdrop" id="compositionBackdrop" role="presentation">
+    <section class="composition-dialog" role="dialog" aria-modal="true" aria-labelledby="compositionTitle">
+      <header class="composition-head">
+        <div class="composition-head-copy">
+          <h2 class="composition-title" id="compositionTitle" data-i18n="compositionTitle">Композиция шаров</h2>
+          <p class="composition-subtitle" data-i18n="compositionSubtitle">Наложите сохранённые версии друг на друга и скопируйте единый код.</p>
+        </div>
+        <button class="composition-close" id="closeCompositionBtn" type="button" aria-label="Закрыть">×</button>
+      </header>
+      <div class="composition-body">
+        <section class="composition-preview-panel" id="compositionPreviewPanel">
+          <div class="composition-preview" id="compositionPreview"></div>
+          <textarea class="composition-code" id="compositionCode" spellcheck="false" readonly></textarea>
+          <div class="composition-preview-actions">
+            <button class="composition-code-toggle" id="toggleCompositionCodeBtn" type="button" data-i18n="showCompositionCode">Показать код</button>
+            <button class="composition-code-toggle" id="saveCompositionBtn" type="button" data-i18n="saveComposition">Сохранить в историю</button>
+            <button class="composition-copy" id="copyCompositionBtn" type="button" data-i18n="copyComposition">Скопировать композицию</button>
+          </div>
+        </section>
+        <aside class="composition-controls">
+          <div class="composition-toolbar">
+            <h3 class="composition-section-title" data-i18n="compositionLayers">Слои шаров</h3>
+            <button class="composition-add" id="addCompositionLayerBtn" type="button" data-i18n="addOrbLayer">Добавить шар</button>
+          </div>
+          <div class="composition-layer-list" id="compositionLayerList"></div>
+          <div class="composition-layer-settings" id="compositionLayerSettings"></div>
+        </aside>
+      </div>
+    </section>
+  </div>
 
   <script>
     const defaults = [
@@ -1682,6 +2067,34 @@
         sizePercent: "Размер, %",
         versionHistory: "История версий",
         saveCurrent: "Сохранить текущую версию",
+        openComposition: "Собрать композицию",
+        compositionTitle: "Композиция шаров",
+        compositionSubtitle: "Наложите сохранённые версии друг на друга и скопируйте единый код.",
+        compositionLayers: "Слои шаров",
+        addOrbLayer: "Добавить шар",
+        copyComposition: "Скопировать композицию",
+        showCompositionCode: "Показать код",
+        hideCompositionCode: "Скрыть код",
+        compositionEmpty: "Добавьте хотя бы один сохранённый шар.",
+        compositionSaveFirst: "Сначала сохраните версию шара, затем добавьте её в композицию.",
+        saveComposition: "Сохранить в историю",
+        compositionSaved: "Композиция сохранена",
+        compositionBadge: "Композиция",
+        openCompositionScene: "Открыть в Сцене",
+        loadComposition: "Открыть композицию",
+        sourceVersion: "Версия шара",
+        layerSize: "Размер, %",
+        layerOpacity: "Прозрачность",
+        layerX: "Положение X, %",
+        layerY: "Положение Y, %",
+        blendMode: "Наложение",
+        motionSpeed: "Движение, сек",
+        rotationSpeed: "Вращение, сек",
+        blendNormal: "Обычное",
+        blendScreen: "Экран",
+        blendLighten: "Светлее",
+        blendOverlay: "Перекрытие",
+        blendSoftLight: "Мягкий свет",
         readyCss: "Готовый CSS",
         exportProject: "Выгрузить",
         loadProject: "Загрузить",
@@ -1706,6 +2119,8 @@
         glowPulse: "Пульсация подсветки",
         glowSpin: "Вращение подсветки, сек",
         shapeChange: "Изменение формы, %",
+        rippleEffect: "Ripple, сила волны",
+        bounceEffect: "Bounce, высота",
         animationCss: "CSS анимации",
         animationTab: "Анимация",
         colorTab: "Цвет",
@@ -1722,6 +2137,7 @@
         sceneAnimationType: "Тип анимации",
         sceneAnimationNormal: "Обычная анимация",
         sceneAnimationColor: "Смена цвета",
+        sceneAnimationComposition: "Композиция",
         uploadBackground: "Загрузить фон",
         removeBackground: "Удалить фон",
         backgroundColor: "Цвет фона",
@@ -1772,6 +2188,34 @@
         sizePercent: "Size, %",
         versionHistory: "Version history",
         saveCurrent: "Save current version",
+        openComposition: "Build composition",
+        compositionTitle: "Orb composition",
+        compositionSubtitle: "Layer saved orb versions and copy one complete code block.",
+        compositionLayers: "Orb layers",
+        addOrbLayer: "Add orb",
+        copyComposition: "Copy composition",
+        showCompositionCode: "Show code",
+        hideCompositionCode: "Hide code",
+        compositionEmpty: "Add at least one saved orb.",
+        compositionSaveFirst: "Save an orb version first, then add it to the composition.",
+        saveComposition: "Save to history",
+        compositionSaved: "Composition saved",
+        compositionBadge: "Composition",
+        openCompositionScene: "Open in Scene",
+        loadComposition: "Open composition",
+        sourceVersion: "Orb version",
+        layerSize: "Size, %",
+        layerOpacity: "Opacity",
+        layerX: "Position X, %",
+        layerY: "Position Y, %",
+        blendMode: "Blend mode",
+        motionSpeed: "Motion, sec",
+        rotationSpeed: "Rotation, sec",
+        blendNormal: "Normal",
+        blendScreen: "Screen",
+        blendLighten: "Lighten",
+        blendOverlay: "Overlay",
+        blendSoftLight: "Soft light",
         readyCss: "Ready CSS",
         exportProject: "Export",
         loadProject: "Load",
@@ -1796,6 +2240,8 @@
         glowPulse: "Glow pulse",
         glowSpin: "Glow rotation, sec",
         shapeChange: "Shape change, %",
+        rippleEffect: "Ripple strength",
+        bounceEffect: "Bounce height",
         animationCss: "Animation CSS",
         animationTab: "Animation",
         colorTab: "Color",
@@ -1812,6 +2258,7 @@
         sceneAnimationType: "Animation type",
         sceneAnimationNormal: "Standard animation",
         sceneAnimationColor: "Color transition",
+        sceneAnimationComposition: "Composition",
         uploadBackground: "Upload background",
         removeBackground: "Remove background",
         backgroundColor: "Background color",
@@ -1838,6 +2285,12 @@
     const cssOutput = document.getElementById("cssOutput");
     const cssCodeView = document.getElementById("cssCodeView");
     const projectFileInput = document.getElementById("projectFileInput");
+    const compositionBackdrop = document.getElementById("compositionBackdrop");
+    const compositionPreviewPanel = document.getElementById("compositionPreviewPanel");
+    const compositionPreview = document.getElementById("compositionPreview");
+    const compositionCode = document.getElementById("compositionCode");
+    const compositionLayerList = document.getElementById("compositionLayerList");
+    const compositionLayerSettings = document.getElementById("compositionLayerSettings");
     const fields = {
       name: document.getElementById("nameInput"),
       color: document.getElementById("colorInput"),
@@ -1876,12 +2329,18 @@
 
     const clone = value => JSON.parse(JSON.stringify(value));
     const versionKey = "orb-gradient-editor-versions";
+    const compositionKey = "orb-gradient-editor-composition";
+    const savedCompositionKey = "orb-gradient-editor-saved-compositions";
     let points = clone(defaults);
     let glow = { ...defaultGlow };
     let base = { ...defaultBase };
     let outline = { ...defaultOutline };
     let orbSizePx = 300;
     let versions = loadVersions();
+    let compositionLayers = loadCompositionLayers();
+    let savedCompositions = loadSavedCompositions();
+    let selectedCompositionLayerId = compositionLayers[0]?.id || null;
+    let draggedCompositionLayerId = null;
     let selectedId = points[0].id;
     let draggedPointId = null;
     let suppressPointClickUntil = 0;
@@ -1903,6 +2362,7 @@
       localStorage.setItem("orb-gradient-editor-lang", currentLang);
       renderList();
       renderVersions();
+      if (compositionBackdrop.classList.contains("open")) renderComposition();
     }
 
     function hexToRgb(hex) {
@@ -2121,6 +2581,8 @@
           cssSize
         },
         versions: clone(versions),
+        composition: clone(compositionLayers),
+        savedCompositions: clone(savedCompositions),
         css: {
           large: buildCss("large"),
           small: buildCss("small")
@@ -2168,6 +2630,15 @@
         versions = clone(data.versions).slice(0, 12);
         saveVersions();
       }
+      if (Array.isArray(data?.composition)) {
+        compositionLayers = clone(data.composition);
+        selectedCompositionLayerId = compositionLayers[0]?.id || null;
+        saveCompositionLayers();
+      }
+      if (Array.isArray(data?.savedCompositions)) {
+        savedCompositions = clone(data.savedCompositions).slice(0, 12);
+        saveSavedCompositions();
+      }
       selectedId = points[0].id;
       document.getElementById("smallBtn").textContent = normalizedOrbSize() === 66 ? t("largeCss") : t("smallCss");
       render();
@@ -2206,7 +2677,7 @@
 
     function renderVersions() {
       versionList.innerHTML = "";
-      if (!versions.length) {
+      if (!versions.length && !savedCompositions.length) {
         const empty = document.createElement("div");
         empty.className = "hint";
         empty.textContent = t("emptyVersions");
@@ -2258,6 +2729,37 @@
         });
         versionList.append(card);
       });
+
+      savedCompositions.forEach(saved => {
+        const card = document.createElement("div");
+        card.className = "version-card composition-version-card";
+        card.innerHTML = `
+          <div class="version-row">
+            <span class="version-info">
+              <input class="version-name-input" type="text" value="${escapeAttribute(saved.name)}" aria-label="${t("compositionBadge")}">
+              <small>${t("compositionBadge")} · ${(saved.layers || []).length}</small>
+            </span>
+            <button class="delete-btn" type="button" data-action="delete-composition" title="${t("delete")}">×</button>
+          </div>
+          <div class="version-actions">
+            <button class="action-btn compact" type="button" data-action="load-composition">${t("loadComposition")}</button>
+            <button class="action-btn compact primary" type="button" data-action="scene-composition">${t("openCompositionScene")}</button>
+          </div>`;
+        const nameInput = card.querySelector(".version-name-input");
+        nameInput.addEventListener("click", event => event.stopPropagation());
+        nameInput.addEventListener("change", () => {
+          saved.name = nameInput.value.trim() || saved.name;
+          nameInput.value = saved.name;
+          saveSavedCompositions();
+        });
+        card.addEventListener("click", event => {
+          const action = event.target.dataset.action;
+          if (action === "load-composition") loadSavedComposition(saved.id);
+          if (action === "scene-composition") openCompositionScene(saved);
+          if (action === "delete-composition") deleteSavedComposition(saved.id);
+        });
+        versionList.append(card);
+      });
     }
 
     function saveCurrentVersion() {
@@ -2281,11 +2783,384 @@
 
     function deleteVersion(id) {
       versions = versions.filter(item => item.id !== id);
+      compositionLayers = compositionLayers.filter(layer => layer.versionId !== id);
+      if (!compositionLayers.some(layer => layer.id === selectedCompositionLayerId)) {
+        selectedCompositionLayerId = compositionLayers[0]?.id || null;
+      }
       saveVersions();
+      saveCompositionLayers();
+      renderVersions();
+      if (compositionBackdrop.classList.contains("open")) renderComposition();
+    }
+
+    function loadCompositionLayers() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(compositionKey) || "[]");
+        return Array.isArray(stored) ? stored : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCompositionLayers() {
+      localStorage.setItem(compositionKey, JSON.stringify(compositionLayers));
+    }
+
+    function loadSavedCompositions() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(savedCompositionKey) || "[]");
+        return Array.isArray(stored) ? stored : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveSavedCompositions() {
+      localStorage.setItem(savedCompositionKey, JSON.stringify(savedCompositions));
+    }
+
+    function compositionSnapshot() {
+      return {
+        id: `saved-composition-${Date.now()}`,
+        name: `${t("compositionBadge")} ${new Date().toLocaleString(currentLang === "ru" ? "ru-RU" : "en-US", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`,
+        createdAt: new Date().toISOString(),
+        layers: compositionLayers.map(layer => ({
+          ...clone(layer),
+          snapshotVersion: clone(compositionVersion(layer))
+        })).filter(layer => layer.snapshotVersion)
+      };
+    }
+
+    function saveCurrentComposition() {
+      const snapshot = compositionSnapshot();
+      if (!snapshot.layers.length) return;
+      savedCompositions = [snapshot, ...savedCompositions].slice(0, 12);
+      saveSavedCompositions();
+      renderVersions();
+      const button = document.getElementById("saveCompositionBtn");
+      button.textContent = t("compositionSaved");
+      setTimeout(() => { button.textContent = t("saveComposition"); }, 1200);
+    }
+
+    function loadSavedComposition(id) {
+      const saved = savedCompositions.find(item => item.id === id);
+      if (!saved) return;
+      compositionLayers = clone(saved.layers || []);
+      selectedCompositionLayerId = compositionLayers[0]?.id || null;
+      saveCompositionLayers();
+      openComposition();
+    }
+
+    function deleteSavedComposition(id) {
+      savedCompositions = savedCompositions.filter(item => item.id !== id);
+      saveSavedCompositions();
       renderVersions();
     }
 
-    function buildAnimationHtml(version) {
+    function compositionVersion(layer) {
+      const source = layer.snapshotVersion || versions.find(version => version.id === layer.versionId);
+      if (!source) return null;
+      return {
+        ...source,
+        points: clone(source.points || []),
+        glow: { ...defaultGlow, ...(source.glow || {}) },
+        base: { ...defaultBase, ...(source.base || {}) },
+        outline: { ...defaultOutline, ...(source.outline || {}) },
+        sizePx: normalizedOrbSize(source.sizePx ?? 300)
+      };
+    }
+
+    function createCompositionLayer(versionId) {
+      const unusedVersion = versions.find(version => !compositionLayers.some(layer => layer.versionId === version.id));
+      const sourceId = versionId || unusedVersion?.id || versions[0]?.id;
+      if (!sourceId) return null;
+      const index = compositionLayers.length;
+      return {
+        id: `composition-layer-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        versionId: sourceId,
+        x: 50 + Math.min(12, index * 4),
+        y: 50,
+        scale: 100,
+        opacity: 1,
+        blend: index ? "screen" : "normal",
+        motion: 8 + index * 1.5,
+        rotation: 36 + index * 8
+      };
+    }
+
+    function compositionBackground(version) {
+      return [...version.points.map(gradientForPoint), baseGradient].join(",\n        ");
+    }
+
+    function compositionBackgroundSize(version) {
+      return [...version.points.map((point, index) => point.shape === "arc"
+        ? "100% 100%"
+        : `${index % 2 ? 116 : 120}% ${index % 2 ? 116 : 120}%`), "100% 100%"].join(", ");
+    }
+
+    function compositionPosition(version, offset = 0) {
+      return [...version.points.map((point, index) => {
+        if (point.shape === "arc") return "50% 50%";
+        const wave = index % 2 ? -offset : offset;
+        return `${point.x + wave}% ${point.y - wave}%`;
+      }), "50% 50%"].join(", ");
+    }
+
+    function compositionOutput(sourceLayers = compositionLayers) {
+      const activeLayers = sourceLayers
+        .map(layer => ({ layer, version: compositionVersion(layer) }))
+        .filter(item => item.version);
+      const html = `<div class="orb-composition">\n${activeLayers.map(({ layer }, index) =>
+        `  <div class="orb-composition-layer orb-composition-layer-${index + 1}">\n    <div class="orb-composition-wrap"><div class="orb-composition-sphere"></div></div>\n  </div>`
+      ).join("\n")}\n</div>`;
+      const layerCss = activeLayers.map(({ layer, version }, index) => {
+        const selector = `.orb-composition-layer-${index + 1}`;
+        const shadow = buildShadow(version.sizePx, version.outline).join(",\n        ");
+        return `${selector} {
+  left: ${layer.x}%;
+  top: ${layer.y}%;
+  z-index: ${index + 1};
+  opacity: ${layer.opacity};
+  mix-blend-mode: ${layer.blend};
+  transform: translate(-50%, -50%) scale(${Number(layer.scale) / 100});
+}
+
+${selector} .orb-composition-wrap {
+  width: ${version.sizePx}px;
+  height: ${version.sizePx}px;
+  --motion-duration: ${layer.motion}s;
+  --rotation-duration: ${layer.rotation}s;
+  --glow-color: ${rgba(version.glow.color, version.glow.alpha)};
+  --glow-blur: ${Math.round(version.glow.blur * version.sizePx / 300)}px;
+  --glow-size: ${version.glow.size}%;
+  --glow-x: ${version.glow.x}%;
+  --glow-y: ${version.glow.y}%;
+}
+
+${selector} .orb-composition-sphere {
+  width: ${version.sizePx}px;
+  height: ${version.sizePx}px;
+  background-color: ${rgba(version.base.color, version.base.alpha)};
+  background-image:
+        ${compositionBackground(version)};
+  background-size: ${compositionBackgroundSize(version)};
+  --position-a: ${compositionPosition(version, 0)};
+  --position-b: ${compositionPosition(version, 5)};
+  --position-c: ${compositionPosition(version, -2)};
+  box-shadow:
+        ${shadow};
+}`;
+      }).join("\n\n");
+      const css = `.orb-composition {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  aspect-ratio: 16 / 9;
+  overflow: visible;
+}
+
+.orb-composition-layer {
+  position: absolute;
+  transform-origin: center;
+}
+
+.orb-composition-wrap {
+  position: relative;
+}
+
+.orb-composition-wrap::before {
+  content: "";
+  position: absolute;
+  left: var(--glow-x);
+  top: var(--glow-y);
+  width: var(--glow-size);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-color) 0 24%, transparent 72%);
+  filter: blur(var(--glow-blur));
+  transform: translate(-50%, -50%);
+  animation: composition-glow 8s ease-in-out infinite;
+}
+
+.orb-composition-sphere {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  background-repeat: no-repeat;
+  transform-origin: center;
+  animation:
+    composition-motion var(--motion-duration) ease-in-out infinite,
+    composition-spin var(--rotation-duration) linear infinite;
+}
+
+${layerCss}
+
+@keyframes composition-motion {
+  0%, 100% { background-position: var(--position-a); transform: translateY(0) scale(1); filter: saturate(1.08) brightness(1); }
+  45% { background-position: var(--position-b); transform: translateY(-3%) scale(1.008); filter: saturate(1.14) brightness(1.025); }
+  72% { background-position: var(--position-c); transform: translateY(-1%) scale(.998); filter: saturate(1.1) brightness(1.01); }
+}
+
+@keyframes composition-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@keyframes composition-glow {
+  0%, 100% { transform: translate(-50%, -50%) scale(.96); opacity: .82; }
+  50% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+}`;
+      return { html, css, all: `<style>\n${css}\n</style>\n${html}` };
+    }
+
+    function renderCompositionPreview() {
+      const output = compositionOutput();
+      compositionCode.value = output.all;
+      compositionPreview.innerHTML = compositionLayers.length
+        ? `<style>${output.css}</style>${output.html}`
+        : `<div class="composition-empty">${t("compositionEmpty")}</div>`;
+    }
+
+    function updateCompositionLayer(id, patch) {
+      compositionLayers = compositionLayers.map(layer => layer.id === id ? { ...layer, ...patch } : layer);
+      saveCompositionLayers();
+      renderCompositionPreview();
+    }
+
+    function startCompositionLayerDrag(event, id) {
+      event.preventDefault();
+      event.stopPropagation();
+      draggedCompositionLayerId = id;
+      let targetId = id;
+      let insertAfter = false;
+      const move = pointerEvent => {
+        const card = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)?.closest(".composition-layer-card");
+        if (!card?.dataset.layerId || card.dataset.layerId === id) return;
+        targetId = card.dataset.layerId;
+        const rect = card.getBoundingClientRect();
+        insertAfter = pointerEvent.clientY > rect.top + rect.height / 2;
+      };
+      const stop = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+        window.removeEventListener("pointercancel", stop);
+        if (targetId !== id) {
+          const next = [...compositionLayers];
+          const from = next.findIndex(layer => layer.id === id);
+          const [moved] = next.splice(from, 1);
+          let to = next.findIndex(layer => layer.id === targetId);
+          if (insertAfter) to += 1;
+          next.splice(Math.max(0, to), 0, moved);
+          compositionLayers = next;
+          saveCompositionLayers();
+          renderComposition();
+        }
+        draggedCompositionLayerId = null;
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", stop);
+      window.addEventListener("pointercancel", stop);
+    }
+
+    function renderCompositionLayerList() {
+      compositionLayerList.innerHTML = "";
+      if (!compositionLayers.length) {
+        compositionLayerList.innerHTML = `<div class="composition-empty">${t("compositionEmpty")}</div>`;
+        return;
+      }
+      compositionLayers.forEach((layer, index) => {
+        const version = compositionVersion(layer);
+        if (!version) return;
+        const card = document.createElement("div");
+        card.className = `composition-layer-card${layer.id === selectedCompositionLayerId ? " selected" : ""}`;
+        card.dataset.layerId = layer.id;
+        card.innerHTML = `<span class="composition-drag-handle" aria-label="Drag">⋮⋮</span><span class="composition-layer-name">${index + 1}. ${escapeAttribute(version.name)}</span><button class="composition-remove-layer" type="button" aria-label="${t("delete")}">×</button>`;
+        card.addEventListener("click", () => {
+          selectedCompositionLayerId = layer.id;
+          renderComposition();
+        });
+        card.querySelector(".composition-drag-handle").addEventListener("pointerdown", event => startCompositionLayerDrag(event, layer.id));
+        card.querySelector(".composition-remove-layer").addEventListener("click", event => {
+          event.stopPropagation();
+          compositionLayers = compositionLayers.filter(item => item.id !== layer.id);
+          selectedCompositionLayerId = compositionLayers[0]?.id || null;
+          saveCompositionLayers();
+          renderComposition();
+        });
+        compositionLayerList.append(card);
+      });
+    }
+
+    function renderCompositionSettings() {
+      compositionLayerSettings.innerHTML = "";
+      const layer = compositionLayers.find(item => item.id === selectedCompositionLayerId);
+      if (!layer) {
+        compositionLayerSettings.innerHTML = `<div class="composition-empty wide">${t("compositionEmpty")}</div>`;
+        return;
+      }
+      const snapshotOption = layer.snapshotVersion && !versions.some(version => version.id === layer.versionId)
+        ? `<option value="${escapeAttribute(layer.versionId)}" selected>${escapeAttribute(layer.snapshotVersion.name)}</option>`
+        : "";
+      const versionOptions = snapshotOption + versions.map(version => `<option value="${escapeAttribute(version.id)}"${version.id === layer.versionId ? " selected" : ""}>${escapeAttribute(version.name)}</option>`).join("");
+      const blendOptions = [
+        ["normal", t("blendNormal")],
+        ["screen", t("blendScreen")],
+        ["lighten", t("blendLighten")],
+        ["overlay", t("blendOverlay")],
+        ["soft-light", t("blendSoftLight")]
+      ].map(([value, label]) => `<option value="${value}"${value === layer.blend ? " selected" : ""}>${label}</option>`).join("");
+      compositionLayerSettings.innerHTML = `
+        <label class="wide">${t("sourceVersion")}<select data-composition-field="versionId">${versionOptions}</select></label>
+        <label>${t("layerSize")}<input type="range" min="20" max="180" step="1" value="${layer.scale}" data-composition-field="scale"></label>
+        <label>${t("layerOpacity")}<input type="range" min="0" max="1" step="0.01" value="${layer.opacity}" data-composition-field="opacity"></label>
+        <label>${t("layerX")}<input type="range" min="0" max="100" step="1" value="${layer.x}" data-composition-field="x"></label>
+        <label>${t("layerY")}<input type="range" min="0" max="100" step="1" value="${layer.y}" data-composition-field="y"></label>
+        <label class="wide">${t("blendMode")}<select data-composition-field="blend">${blendOptions}</select></label>
+        <label>${t("motionSpeed")}<input type="range" min="2" max="24" step="0.5" value="${layer.motion}" data-composition-field="motion"></label>
+        <label>${t("rotationSpeed")}<input type="range" min="10" max="90" step="1" value="${layer.rotation}" data-composition-field="rotation"></label>`;
+      compositionLayerSettings.querySelectorAll("[data-composition-field]").forEach(input => {
+        input.addEventListener("input", () => {
+          const key = input.dataset.compositionField;
+          const value = input.tagName === "SELECT" ? input.value : Number(input.value);
+          updateCompositionLayer(layer.id, key === "versionId" ? { versionId: value, snapshotVersion: null } : { [key]: value });
+          if (key === "versionId") renderComposition();
+          syncRangeFills();
+        });
+      });
+    }
+
+    function renderComposition() {
+      compositionLayers = compositionLayers.filter(layer => compositionVersion(layer));
+      if (!compositionLayers.some(layer => layer.id === selectedCompositionLayerId)) {
+        selectedCompositionLayerId = compositionLayers[0]?.id || null;
+      }
+      saveCompositionLayers();
+      renderCompositionLayerList();
+      renderCompositionSettings();
+      renderCompositionPreview();
+      syncRangeFills();
+    }
+
+    function openComposition() {
+      if (!versions.length) saveCurrentVersion();
+      if (!compositionLayers.length && versions.length) {
+        const firstLayer = createCompositionLayer(versions[0].id);
+        if (firstLayer) compositionLayers.push(firstLayer);
+        selectedCompositionLayerId = firstLayer?.id || null;
+      }
+      compositionBackdrop.classList.add("open");
+      document.body.style.overflow = "hidden";
+      renderComposition();
+    }
+
+    function closeComposition() {
+      compositionBackdrop.classList.remove("open");
+      compositionPreviewPanel.classList.remove("show-code");
+      document.getElementById("toggleCompositionCodeBtn").textContent = t("showCompositionCode");
+      document.body.style.overflow = "";
+    }
+
+    function buildAnimationHtml(version, savedComposition = null, initialTab = "animation") {
       version = {
         ...version,
         sizePx: normalizedOrbSize(version.sizePx ?? 300),
@@ -2293,6 +3168,9 @@
         outline: { ...defaultOutline, ...version.outline }
       };
       const state = JSON.stringify(version).replace(/</g, "\\u003c");
+      const sceneComposition = savedComposition ? compositionOutput(savedComposition.layers || []) : null;
+      const sceneCompositionJson = JSON.stringify(sceneComposition).replace(/</g, "\\u003c");
+      const initialTabJson = JSON.stringify(initialTab);
       const returnUrl = new URL(window.location.href);
       returnUrl.searchParams.set("skipIntro", "1");
       const editorUrl = JSON.stringify(returnUrl.href).replace(/</g, "\\u003c");
@@ -2384,6 +3262,20 @@
       background-repeat: no-repeat;
       background-size: cover;
     }
+    .scene-composition-host {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      overflow: hidden;
+    }
+    .scene-composition-host.active { display: grid; }
+    .scene-composition-host .orb-composition {
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      aspect-ratio: auto;
+    }
     body.scene-mode .preview-stage {
       padding: 18px;
       background: #fff;
@@ -2428,6 +3320,17 @@
       opacity: var(--glow-high);
       will-change: transform, opacity, filter;
       animation: glow-drift var(--glow-spin) linear infinite;
+    }
+    .sphere-wrap::after {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      border: max(1px, calc(var(--ripple-strength) * 5px)) solid var(--glow-color);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      animation: ripple-wave var(--ripple-speed) ease-out infinite;
     }
     .sphere {
       position: relative;
@@ -2859,6 +3762,11 @@
       0%, 100% { opacity: 0; }
       50% { opacity: var(--color-opacity); }
     }
+    @keyframes ripple-wave {
+      0%, 25% { transform: scale(.92); opacity: 0; }
+      40% { opacity: calc(var(--ripple-strength) * .5); }
+      100% { transform: scale(calc(1 + var(--ripple-strength) * .32)); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -2866,6 +3774,7 @@
     <section class="preview-stage">
       <div class="scene-frame" id="sceneFrame">
         <div class="sphere-wrap" id="wrap"><div class="sphere" id="sphere"></div></div>
+        <div class="scene-composition-host" id="sceneCompositionHost"></div>
       </div>
     </section>
     <label class="code-area"><span id="codeLabel">${t("animationCss")}</span> <textarea id="code" spellcheck="false"></textarea></label>
@@ -2898,6 +3807,8 @@
       <label>${t("glowPulse")} <input id="glowPulse" type="range" min="0" max="0.55" value="0.14" step="0.01"></label>
       <label>${t("glowSpin")} <input id="glowSpin" type="range" min="2" max="24" value="10" step="0.5"></label>
       <label>${t("shapeChange")} <input id="shape" type="range" min="0" max="8" value="2" step="1"></label>
+      <label>${t("rippleEffect")} <input id="ripple" type="range" min="0" max="1" value="0" step="0.05"></label>
+      <label>${t("bounceEffect")} <input id="bounce" type="range" min="0" max="30" value="0" step="1"></label>
     </div>
     <div class="tab-content" id="colorControls">
       <div class="settings-actions">
@@ -2921,6 +3832,7 @@
         <select id="sceneAnimationMode">
           <option value="animation">${t("sceneAnimationNormal")}</option>
           <option value="color">${t("sceneAnimationColor")}</option>
+          ${savedComposition ? `<option value="composition">${t("sceneAnimationComposition")}</option>` : ""}
         </select>
       </label>
       <label>${t("frameRatio")}
@@ -2948,7 +3860,7 @@
   <script>
     const version = ${state};
     const shadows = ${shadowJson};
-    const controls = ["speed", "shift", "rotation", "float", "glowMove", "glowPulse", "glowSpin", "shape"].reduce((acc, id) => {
+    const controls = ["speed", "shift", "rotation", "float", "glowMove", "glowPulse", "glowSpin", "shape", "ripple", "bounce"].reduce((acc, id) => {
       acc[id] = document.getElementById(id);
       return acc;
     }, {});
@@ -2956,6 +3868,8 @@
     const sphere = document.getElementById("sphere");
     const wrap = document.getElementById("wrap");
     const sceneFrame = document.getElementById("sceneFrame");
+    const sceneCompositionHost = document.getElementById("sceneCompositionHost");
+    const sceneComposition = ${sceneCompositionJson};
     const previewStage = document.querySelector(".preview-stage");
     const code = document.getElementById("code");
     const codeLabel = document.getElementById("codeLabel");
@@ -2992,6 +3906,9 @@
     let backgroundUrl = "";
     let sceneBackgroundColor = "#f7f7f8";
     let activeTab = "animation";
+    if (sceneComposition) {
+      sceneCompositionHost.innerHTML = "<style>" + sceneComposition.css + "</style>" + sceneComposition.html;
+    }
     const targetColors = Object.fromEntries(version.points.map((point, index) => [
       point.id,
       version.points[(index + 1) % version.points.length]?.color || point.color
@@ -3227,6 +4144,12 @@
       sceneFrame.style.height = height + "px";
       sceneFrame.style.aspectRatio = dimensions.width + " / " + dimensions.height;
       const scale = (Math.min(width, height) * Number(orbSize.value) / 100) / Number(version.sizePx || 300);
+      const showComposition = activeTab === "scene" && sceneAnimationMode.value === "composition" && sceneComposition;
+      sceneCompositionHost.classList.toggle("active", Boolean(showComposition));
+      sceneCompositionHost.style.transform = showComposition
+        ? "translate(" + (Number(orbX.value) - 50) + "%, " + (Number(orbY.value) - 50) + "%) scale(" + (Number(orbSize.value) / 34) + ")"
+        : "";
+      wrap.style.display = showComposition ? "none" : "block";
       wrap.style.left = orbX.value + "%";
       wrap.style.top = orbY.value + "%";
       wrap.style.position = activeTab === "scene" ? "absolute" : "relative";
@@ -3246,6 +4169,8 @@
       wrap.style.left = "";
       wrap.style.top = "";
       wrap.style.transform = "";
+      wrap.style.display = "block";
+      sceneCompositionHost.classList.remove("active");
     }
     function setTab(tab) {
       activeTab = tab;
@@ -3305,7 +4230,7 @@
       const shift = Number(controls.shift.value);
       const pulse = Number(controls.glowPulse.value);
       const glowMove = Number(controls.glowMove.value);
-      const floatAmount = Number(controls.float.value);
+      const floatAmount = Number(controls.float.value) + Number(controls.bounce.value);
       const floatingY = -Math.sin(phase) * floatAmount * diameter / 300;
       const glowX = centerX + Math.cos(phase) * glowMove * diameter / 300;
       const glowY = centerY + floatingY + Math.sin(phase) * glowMove * 0.35 * diameter / 300;
@@ -3317,6 +4242,19 @@
       ctx.beginPath();
       ctx.arc(glowX, glowY, glowRadius, 0, Math.PI * 2);
       ctx.fill();
+
+      const rippleStrength = Number(controls.ripple.value);
+      if (rippleStrength > 0) {
+        const rippleProgress = ((phase / (Math.PI * 2)) % 1 + 1) % 1;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.sin(rippleProgress * Math.PI)) * rippleStrength * 0.42;
+        ctx.strokeStyle = rgba(version.glow.color, 1);
+        ctx.lineWidth = Math.max(1, diameter * 0.012 * rippleStrength);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + floatingY, diameter * (0.46 + rippleProgress * 0.18), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       const shape = Number(controls.shape.value) / 400;
       const shapeWave = Math.sin(phase) * shape;
@@ -3532,6 +4470,7 @@
       const shift = Number(controls.shift.value);
       const shape = Number(controls.shape.value);
       const pulse = Number(controls.glowPulse.value);
+      const effectiveFloat = Number(controls.float.value) + Number(controls.bounce.value);
       wrap.style.setProperty("--glow-color", rgba(version.glow.color, version.glow.alpha));
       wrap.style.setProperty("--glow-blur", version.glow.blur + "px");
       wrap.style.setProperty("--glow-size", version.glow.size + "%");
@@ -3544,6 +4483,8 @@
       wrap.style.setProperty("--glow-low", Math.max(0.28, 0.86 - pulse).toFixed(2));
       wrap.style.setProperty("--glow-hue", Math.round(10 + pulse * 80) + "deg");
       wrap.style.setProperty("--glow-spin", controls.glowSpin.value + "s");
+      wrap.style.setProperty("--ripple-strength", controls.ripple.value);
+      wrap.style.setProperty("--ripple-speed", Math.max(1.5, Number(controls.speed.value) * 0.72) + "s");
       sphere.style.setProperty("--sphere-bg", buildBackground());
       sphere.style.setProperty("--sphere-base", rgba(version.base.color, version.base.alpha));
       sphere.style.setProperty("--sphere-shadow", shadows.large.join(", "));
@@ -3555,8 +4496,8 @@
       sphere.style.setProperty("--size-a", buildBackgroundSize());
       sphere.style.setProperty("--size-b", buildBackgroundSize());
       sphere.style.setProperty("--size-c", buildBackgroundSize());
-      sphere.style.setProperty("--float", "-" + controls.float.value + "px");
-      sphere.style.setProperty("--float-half", "-" + (Number(controls.float.value) / 2) + "px");
+      sphere.style.setProperty("--float", "-" + effectiveFloat + "px");
+      sphere.style.setProperty("--float-half", "-" + (effectiveFloat / 2) + "px");
       sphere.style.setProperty("--shape-a", (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%");
       sphere.style.setProperty("--shape-b", (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%");
       sphere.style.setProperty("--shape-c", (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%");
@@ -3605,13 +4546,16 @@
       const sizePx = Number(version.sizePx || 300);
       const shift = Number(controls.shift.value);
       const shape = Number(controls.shape.value);
+      const effectiveFloat = Number(controls.float.value) + Number(controls.bounce.value);
       const shapeA = (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%";
       const shapeB = (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%";
       const shapeC = (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%";
       return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n}\\n\\n" +
         ".hologram-sphere-wrap::before {\\n  content: \\"\\";\\n  position: absolute;\\n  left: " + version.glow.x + "%;\\n  top: " + version.glow.y + "%;\\n  width: " + version.glow.size + "%;\\n  aspect-ratio: 1;\\n  border-radius: 50%;\\n  background: radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%), conic-gradient(from 0deg, " + rgba(version.glow.color, version.glow.alpha) + ", transparent 28%, " + rgba(version.glow.color, version.glow.alpha) + " 56%, transparent 78%, " + rgba(version.glow.color, version.glow.alpha) + ");\\n  filter: blur(" + version.glow.blur + "px) saturate(1.28);\\n  transform: translate(-50%, -50%);\\n  animation: glow-drift " + controls.glowSpin.value + "s linear infinite;\\n}\\n\\n" +
+        ".hologram-sphere-wrap::after {\\n  content: \\\"\\\";\\n  position: absolute;\\n  inset: 0;\\n  z-index: 0;\\n  border: " + Math.max(1, Number(controls.ripple.value) * 5).toFixed(1) + "px solid " + rgba(version.glow.color, version.glow.alpha) + ";\\n  border-radius: 50%;\\n  pointer-events: none;\\n  animation: orb-ripple " + Math.max(1.5, Number(controls.speed.value) * 0.72) + "s ease-out infinite;\\n}\\n\\n" +
         ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  transform-origin: center;\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite, orb-spin " + controls.rotation.value + "s linear infinite;\\n}\\n\\n" +
-        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + controls.float.value + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (Number(controls.float.value) / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
+        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + effectiveFloat + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (effectiveFloat / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
+        "@keyframes orb-ripple {\\n  0%, 25% { transform: scale(.92); opacity: 0; }\\n  40% { opacity: " + (Number(controls.ripple.value) * 0.5).toFixed(2) + "; }\\n  100% { transform: scale(" + (1 + Number(controls.ripple.value) * 0.32).toFixed(2) + "); opacity: 0; }\\n}\\n\\n" +
         "@keyframes orb-spin {\\n  from { rotate: 0deg; }\\n  to { rotate: 360deg; }\\n}\\n\\n" +
         "@keyframes glow-drift {\\n  0% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(0deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n  50% { transform: translate(calc(-50% + " + controls.glowMove.value + "px), calc(-50% - " + (Number(controls.glowMove.value) / 3) + "px)) rotate(180deg); opacity: " + Math.max(0.28, 0.86 - Number(controls.glowPulse.value)).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.45) hue-rotate(" + Math.round(10 + Number(controls.glowPulse.value) * 80) + "deg); }\\n  100% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(360deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n}\\n";
     }
@@ -3681,19 +4625,26 @@
     });
     renderColorControls();
     apply();
-    setTab("animation");
+    if (${initialTabJson} === "scene" && sceneComposition) sceneAnimationMode.value = "composition";
+    setTab(${initialTabJson});
     requestAnimationFrame(tick);
   <\/script>
 </body>
 </html>`;
     }
 
-    function openAnimationWindow(version) {
+    function openAnimationWindow(version, savedComposition = null, initialTab = "animation") {
       const popup = window.open("", "_blank", "width=1180,height=760");
       if (!popup) return;
       popup.document.open();
-      popup.document.write(buildAnimationHtml(version));
+      popup.document.write(buildAnimationHtml(version, savedComposition, initialTab));
       popup.document.close();
+    }
+
+    function openCompositionScene(saved) {
+      const source = saved?.layers?.map(layer => layer.snapshotVersion || compositionVersion(layer)).find(Boolean);
+      if (!source) return;
+      openAnimationWindow(source, saved, "scene");
     }
 
     function renderPoints() {
@@ -4157,6 +5108,47 @@
     });
 
     document.getElementById("saveVersionBtn").addEventListener("click", saveCurrentVersion);
+
+    document.getElementById("openCompositionBtn").addEventListener("click", openComposition);
+    document.getElementById("closeCompositionBtn").addEventListener("click", closeComposition);
+    compositionBackdrop.addEventListener("click", event => {
+      if (event.target === compositionBackdrop) closeComposition();
+    });
+    document.getElementById("addCompositionLayerBtn").addEventListener("click", () => {
+      if (!versions.length) {
+        window.alert(t("compositionSaveFirst"));
+        return;
+      }
+      const layer = createCompositionLayer();
+      if (!layer) return;
+      compositionLayers.push(layer);
+      selectedCompositionLayerId = layer.id;
+      saveCompositionLayers();
+      renderComposition();
+    });
+    document.getElementById("saveCompositionBtn").addEventListener("click", saveCurrentComposition);
+    document.getElementById("toggleCompositionCodeBtn").addEventListener("click", event => {
+      const show = !compositionPreviewPanel.classList.contains("show-code");
+      compositionPreviewPanel.classList.toggle("show-code", show);
+      event.currentTarget.textContent = t(show ? "hideCompositionCode" : "showCompositionCode");
+    });
+    document.getElementById("copyCompositionBtn").addEventListener("click", async event => {
+      const text = compositionOutput().all;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        compositionCode.value = text;
+        compositionCode.select();
+        document.execCommand("copy");
+      }
+      const button = event.currentTarget;
+      const original = t("copyComposition");
+      button.textContent = currentLang === "ru" ? "Скопировано" : "Copied";
+      setTimeout(() => { button.textContent = original; }, 1200);
+    });
+    window.addEventListener("keydown", event => {
+      if (event.key === "Escape" && compositionBackdrop.classList.contains("open")) closeComposition();
+    });
 
     document.getElementById("copyBtn").addEventListener("click", async () => {
       await navigator.clipboard.writeText(cssOutput.value);
