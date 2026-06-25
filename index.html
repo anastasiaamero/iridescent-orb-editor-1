@@ -281,6 +281,7 @@
 
     .sphere {
       position: relative;
+      top: 0;
       width: var(--orb-size, 300px);
       height: var(--orb-size, 300px);
       border-radius: 50%;
@@ -1179,6 +1180,10 @@
         font: inherit;
         font-size: 13px;
         font-weight: 760;
+        line-height: 1.08;
+        text-align: center;
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
 
       .mobile-command-grid .primary {
@@ -1398,7 +1403,10 @@
         min-height: var(--mobile-control-height);
         padding: 0 10px;
         border-radius: var(--mobile-control-radius);
-        font-size: 12px;
+        font-size: 11.5px;
+        line-height: 1.08;
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
 
       .version-list {
@@ -1798,12 +1806,16 @@
 
       .composition-preview-panel {
         flex: 0 0 auto;
-        min-height: 300px;
+        min-height: 270px;
         padding: 10px;
       }
 
       .composition-preview {
-        min-height: 220px;
+        min-height: 190px;
+      }
+
+      .composition-preview .orb-composition {
+        width: min(72%, 260px);
       }
 
       .composition-controls {
@@ -3291,18 +3303,24 @@ ${layerCss}
     }
     .code-area {
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
       gap: 8px;
       min-height: 0;
       color: #757985;
       font-size: 13px;
       font-weight: 760;
     }
+    .code-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
     .sphere-wrap {
       position: relative;
       width: ${version.sizePx}px;
       height: ${version.sizePx}px;
       transform-origin: center;
+      animation: orb-bounce var(--bounce-speed, 1.8s) cubic-bezier(.3, .05, .24, 1) infinite;
     }
     .sphere-wrap::before {
       content: "";
@@ -3326,9 +3344,11 @@ ${layerCss}
       position: absolute;
       z-index: 0;
       inset: 0;
-      border: max(1px, calc(var(--ripple-strength) * 5px)) solid var(--glow-color);
+      border: var(--ripple-width) solid var(--glow-color);
       border-radius: 50%;
       opacity: 0;
+      filter: blur(var(--ripple-blur));
+      box-shadow: 0 0 var(--ripple-glow) var(--glow-color);
       pointer-events: none;
       animation: ripple-wave var(--ripple-speed) ease-out infinite;
     }
@@ -3685,11 +3705,14 @@ ${layerCss}
       }
       .code-area {
         order: 3;
-        height: 420px;
+        height: 470px;
         padding: 12px;
         border-radius: 22px;
         background: #fff;
         box-shadow: 0 12px 36px rgba(32, 32, 32, 0.06);
+      }
+      .code-actions {
+        grid-template-columns: 1fr;
       }
       .panel-head h1 {
         max-width: calc(100vw - 150px);
@@ -3715,31 +3738,57 @@ ${layerCss}
       0% {
         background-position: var(--pos-a);
         background-size: var(--size-a);
-        transform: translateY(0) scale(1);
+        top: 0;
+        transform: scale(1);
         border-radius: var(--shape-a);
         filter: saturate(1.08) brightness(1);
       }
       45% {
         background-position: var(--pos-b);
         background-size: var(--size-b);
-        transform: translateY(var(--float)) scale(1.006);
+        top: var(--float-half);
+        transform: scale(1.003);
         border-radius: var(--shape-b);
         filter: saturate(1.14) brightness(1.025);
+      }
+      56% {
+        background-position: var(--pos-b);
+        background-size: var(--size-b);
+        top: var(--float);
+        transform: scale(1.008);
+        border-radius: var(--shape-b);
+        filter: saturate(1.15) brightness(1.035);
+      }
+      64% {
+        background-position: var(--pos-b);
+        background-size: var(--size-b);
+        top: var(--float-half);
+        transform: scale(0.997);
+        border-radius: var(--shape-b);
+        filter: saturate(1.12) brightness(1.018);
       }
       72% {
         background-position: var(--pos-c);
         background-size: var(--size-c);
-        transform: translateY(var(--float-half)) scale(0.998);
+        top: var(--float-half);
+        transform: scale(0.998);
         border-radius: var(--shape-c);
         filter: saturate(1.1) brightness(1.01);
       }
       100% {
         background-position: var(--pos-a);
         background-size: var(--size-a);
-        transform: translateY(0) scale(1);
+        top: 0;
+        transform: scale(1);
         border-radius: var(--shape-a);
         filter: saturate(1.08) brightness(1);
       }
+    }
+    @keyframes orb-bounce {
+      0%, 18%, 100% { margin-top: 0; }
+      46% { margin-top: calc(-1 * var(--bounce, 0px)); }
+      62% { margin-top: var(--bounce-settle, 0px); }
+      74% { margin-top: 0; }
     }
     @keyframes glow-drift {
       0% {
@@ -3763,9 +3812,10 @@ ${layerCss}
       50% { opacity: var(--color-opacity); }
     }
     @keyframes ripple-wave {
-      0%, 25% { transform: scale(.92); opacity: 0; }
-      40% { opacity: calc(var(--ripple-strength) * .5); }
-      100% { transform: scale(calc(1 + var(--ripple-strength) * .32)); opacity: 0; }
+      0%, 14% { transform: scale(.86); opacity: 0; }
+      28% { opacity: var(--ripple-alpha); }
+      62% { opacity: calc(var(--ripple-alpha) * .58); }
+      100% { transform: scale(var(--ripple-scale)); opacity: 0; }
     }
   </style>
 </head>
@@ -3777,7 +3827,14 @@ ${layerCss}
         <div class="scene-composition-host" id="sceneCompositionHost"></div>
       </div>
     </section>
-    <label class="code-area"><span id="codeLabel">${t("animationCss")}</span> <textarea id="code" spellcheck="false"></textarea></label>
+    <section class="code-area">
+      <span id="codeLabel">${t("animationCss")}</span>
+      <textarea id="code" spellcheck="false"></textarea>
+      <div class="code-actions">
+        <button class="scene-btn primary" id="copyGeneratedCodeBtn" type="button">${t("copyCss")}</button>
+        <button class="scene-btn" id="exportGeneratedCodeBtn" type="button">${t("exportSettings")}</button>
+      </div>
+    </section>
   </main>
   <aside class="panel">
     <div class="panel-head">
@@ -3873,6 +3930,8 @@ ${layerCss}
     const previewStage = document.querySelector(".preview-stage");
     const code = document.getElementById("code");
     const codeLabel = document.getElementById("codeLabel");
+    const copyGeneratedCodeBtn = document.getElementById("copyGeneratedCodeBtn");
+    const exportGeneratedCodeBtn = document.getElementById("exportGeneratedCodeBtn");
     const animationTab = document.getElementById("animationTab");
     const colorTab = document.getElementById("colorTab");
     const sceneTab = document.getElementById("sceneTab");
@@ -3926,6 +3985,18 @@ ${layerCss}
     }
     function downloadJson(filename, data) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(link.href);
+        link.remove();
+      }, 2000);
+    }
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: "text/css;charset=utf-8" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = filename;
@@ -4230,8 +4301,12 @@ ${layerCss}
       const shift = Number(controls.shift.value);
       const pulse = Number(controls.glowPulse.value);
       const glowMove = Number(controls.glowMove.value);
-      const floatAmount = Number(controls.float.value) + Number(controls.bounce.value);
-      const floatingY = -Math.sin(phase) * floatAmount * diameter / 300;
+      const floatAmount = Number(controls.float.value);
+      const bounceAmount = Number(controls.bounce.value) * 1.35;
+      const bounceSpeed = Math.max(1.15, Math.min(2.4, Number(controls.speed.value) * 0.24));
+      const bouncePhase = (elapsedMs / (bounceSpeed * 1000)) * Math.PI * 2;
+      const bounceWave = Math.pow(Math.max(0, Math.sin(bouncePhase)), 1.7);
+      const floatingY = (-Math.sin(phase) * floatAmount - bounceWave * bounceAmount) * diameter / 300;
       const glowX = centerX + Math.cos(phase) * glowMove * diameter / 300;
       const glowY = centerY + floatingY + Math.sin(phase) * glowMove * 0.35 * diameter / 300;
       const glowRadius = diameter * Math.max(0.55, Number(version.glow.size) / 100);
@@ -4245,13 +4320,17 @@ ${layerCss}
 
       const rippleStrength = Number(controls.ripple.value);
       if (rippleStrength > 0) {
-        const rippleProgress = ((phase / (Math.PI * 2)) % 1 + 1) % 1;
+        const rippleDuration = Math.max(1200, Math.min(4000, Number(controls.speed.value) * 450));
+        const rippleProgress = ((elapsedMs / rippleDuration) % 1 + 1) % 1;
+        const rippleFade = Math.sin(rippleProgress * Math.PI);
         ctx.save();
-        ctx.globalAlpha = Math.max(0, Math.sin(rippleProgress * Math.PI)) * rippleStrength * 0.42;
+        ctx.globalAlpha = rippleFade * (0.2 + rippleStrength * 0.68);
         ctx.strokeStyle = rgba(version.glow.color, 1);
-        ctx.lineWidth = Math.max(1, diameter * 0.012 * rippleStrength);
+        ctx.shadowColor = rgba(version.glow.color, Math.min(0.8, 0.28 + rippleStrength * 0.48));
+        ctx.shadowBlur = diameter * (0.018 + rippleStrength * 0.028);
+        ctx.lineWidth = Math.max(1.25, diameter * (0.004 + 0.014 * rippleStrength));
         ctx.beginPath();
-        ctx.arc(centerX, centerY + floatingY, diameter * (0.46 + rippleProgress * 0.18), 0, Math.PI * 2);
+        ctx.arc(centerX, centerY + floatingY, diameter * (0.43 + rippleProgress * (0.18 + rippleStrength * 0.1)), 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
@@ -4470,7 +4549,9 @@ ${layerCss}
       const shift = Number(controls.shift.value);
       const shape = Number(controls.shape.value);
       const pulse = Number(controls.glowPulse.value);
-      const effectiveFloat = Number(controls.float.value) + Number(controls.bounce.value);
+      const floatAmount = Number(controls.float.value);
+      const bounceAmount = Number(controls.bounce.value) * 1.35;
+      const rippleStrength = Number(controls.ripple.value);
       wrap.style.setProperty("--glow-color", rgba(version.glow.color, version.glow.alpha));
       wrap.style.setProperty("--glow-blur", version.glow.blur + "px");
       wrap.style.setProperty("--glow-size", version.glow.size + "%");
@@ -4483,8 +4564,16 @@ ${layerCss}
       wrap.style.setProperty("--glow-low", Math.max(0.28, 0.86 - pulse).toFixed(2));
       wrap.style.setProperty("--glow-hue", Math.round(10 + pulse * 80) + "deg");
       wrap.style.setProperty("--glow-spin", controls.glowSpin.value + "s");
-      wrap.style.setProperty("--ripple-strength", controls.ripple.value);
-      wrap.style.setProperty("--ripple-speed", Math.max(1.5, Number(controls.speed.value) * 0.72) + "s");
+      wrap.style.setProperty("--ripple-strength", rippleStrength);
+      wrap.style.setProperty("--ripple-width", (rippleStrength > 0 ? Math.max(1.25, 1.2 + rippleStrength * 4.8) : 0) + "px");
+      wrap.style.setProperty("--ripple-blur", (rippleStrength > 0 ? 0.35 + rippleStrength * 0.9 : 0) + "px");
+      wrap.style.setProperty("--ripple-glow", (rippleStrength > 0 ? 4 + rippleStrength * 13 : 0) + "px");
+      wrap.style.setProperty("--ripple-alpha", rippleStrength > 0 ? Math.min(0.94, 0.2 + rippleStrength * 0.68) : 0);
+      wrap.style.setProperty("--ripple-scale", 1 + rippleStrength * 0.48);
+      wrap.style.setProperty("--ripple-speed", Math.max(1.2, Math.min(4, Number(controls.speed.value) * 0.45)) + "s");
+      wrap.style.setProperty("--bounce", bounceAmount + "px");
+      wrap.style.setProperty("--bounce-settle", (bounceAmount * 0.08) + "px");
+      wrap.style.setProperty("--bounce-speed", Math.max(1.15, Math.min(2.4, Number(controls.speed.value) * 0.24)) + "s");
       sphere.style.setProperty("--sphere-bg", buildBackground());
       sphere.style.setProperty("--sphere-base", rgba(version.base.color, version.base.alpha));
       sphere.style.setProperty("--sphere-shadow", shadows.large.join(", "));
@@ -4496,8 +4585,8 @@ ${layerCss}
       sphere.style.setProperty("--size-a", buildBackgroundSize());
       sphere.style.setProperty("--size-b", buildBackgroundSize());
       sphere.style.setProperty("--size-c", buildBackgroundSize());
-      sphere.style.setProperty("--float", "-" + effectiveFloat + "px");
-      sphere.style.setProperty("--float-half", "-" + (effectiveFloat / 2) + "px");
+      sphere.style.setProperty("--float", "-" + floatAmount + "px");
+      sphere.style.setProperty("--float-half", "-" + (floatAmount / 2) + "px");
       sphere.style.setProperty("--shape-a", (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%");
       sphere.style.setProperty("--shape-b", (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%");
       sphere.style.setProperty("--shape-c", (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%");
@@ -4546,21 +4635,47 @@ ${layerCss}
       const sizePx = Number(version.sizePx || 300);
       const shift = Number(controls.shift.value);
       const shape = Number(controls.shape.value);
-      const effectiveFloat = Number(controls.float.value) + Number(controls.bounce.value);
+      const floatAmount = Number(controls.float.value);
+      const bounceAmount = Number(controls.bounce.value) * 1.35;
+      const rippleStrength = Number(controls.ripple.value);
+      const rippleWidth = rippleStrength > 0 ? Math.max(1.25, 1.2 + rippleStrength * 4.8) : 0;
+      const rippleBlur = rippleStrength > 0 ? 0.35 + rippleStrength * 0.9 : 0;
+      const rippleGlow = rippleStrength > 0 ? 4 + rippleStrength * 13 : 0;
+      const rippleAlpha = rippleStrength > 0 ? Math.min(0.94, 0.2 + rippleStrength * 0.68) : 0;
+      const rippleScale = 1 + rippleStrength * 0.48;
+      const rippleSpeed = Math.max(1.2, Math.min(4, Number(controls.speed.value) * 0.45));
+      const bounceSpeed = Math.max(1.15, Math.min(2.4, Number(controls.speed.value) * 0.24));
       const shapeA = (50 - shape * 0.45) + "% " + (50 + shape * 0.45) + "% " + (50 + shape * 0.25) + "% " + (50 - shape * 0.25) + "%";
       const shapeB = (50 + shape * 0.55) + "% " + (50 - shape * 0.35) + "% " + (50 - shape * 0.45) + "% " + (50 + shape * 0.25) + "%";
       const shapeC = (50 - shape * 0.2) + "% " + (50 + shape * 0.3) + "% " + (50 - shape * 0.55) + "% " + (50 + shape * 0.45) + "%";
-      return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n}\\n\\n" +
+      return ".hologram-sphere-wrap {\\n  position: relative;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n  --bounce: " + bounceAmount.toFixed(2) + "px;\\n  --bounce-settle: " + (bounceAmount * 0.08).toFixed(2) + "px;\\n  animation: orb-bounce " + bounceSpeed.toFixed(2) + "s cubic-bezier(.3, .05, .24, 1) infinite;\\n}\\n\\n" +
         ".hologram-sphere-wrap::before {\\n  content: \\"\\";\\n  position: absolute;\\n  left: " + version.glow.x + "%;\\n  top: " + version.glow.y + "%;\\n  width: " + version.glow.size + "%;\\n  aspect-ratio: 1;\\n  border-radius: 50%;\\n  background: radial-gradient(circle at 36% 32%, rgba(255, 255, 255, 0.34), transparent 38%), conic-gradient(from 0deg, " + rgba(version.glow.color, version.glow.alpha) + ", transparent 28%, " + rgba(version.glow.color, version.glow.alpha) + " 56%, transparent 78%, " + rgba(version.glow.color, version.glow.alpha) + ");\\n  filter: blur(" + version.glow.blur + "px) saturate(1.28);\\n  transform: translate(-50%, -50%);\\n  animation: glow-drift " + controls.glowSpin.value + "s linear infinite;\\n}\\n\\n" +
-        ".hologram-sphere-wrap::after {\\n  content: \\\"\\\";\\n  position: absolute;\\n  inset: 0;\\n  z-index: 0;\\n  border: " + Math.max(1, Number(controls.ripple.value) * 5).toFixed(1) + "px solid " + rgba(version.glow.color, version.glow.alpha) + ";\\n  border-radius: 50%;\\n  pointer-events: none;\\n  animation: orb-ripple " + Math.max(1.5, Number(controls.speed.value) * 0.72) + "s ease-out infinite;\\n}\\n\\n" +
-        ".hologram-sphere {\\n  position: relative;\\n  z-index: 1;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  transform-origin: center;\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite, orb-spin " + controls.rotation.value + "s linear infinite;\\n}\\n\\n" +
-        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; transform: translateY(-" + effectiveFloat + "px) scale(1.006); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; transform: translateY(-" + (effectiveFloat / 2) + "px) scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; transform: translateY(0) scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
-        "@keyframes orb-ripple {\\n  0%, 25% { transform: scale(.92); opacity: 0; }\\n  40% { opacity: " + (Number(controls.ripple.value) * 0.5).toFixed(2) + "; }\\n  100% { transform: scale(" + (1 + Number(controls.ripple.value) * 0.32).toFixed(2) + "); opacity: 0; }\\n}\\n\\n" +
+        ".hologram-sphere-wrap::after {\\n  content: \\\"\\\";\\n  position: absolute;\\n  inset: 0;\\n  z-index: 0;\\n  border: " + rippleWidth.toFixed(2) + "px solid " + rgba(version.glow.color, version.glow.alpha) + ";\\n  border-radius: 50%;\\n  opacity: 0;\\n  filter: blur(" + rippleBlur.toFixed(2) + "px);\\n  box-shadow: 0 0 " + rippleGlow.toFixed(1) + "px " + rgba(version.glow.color, version.glow.alpha) + ";\\n  pointer-events: none;\\n  animation: orb-ripple " + rippleSpeed.toFixed(2) + "s ease-out infinite;\\n}\\n\\n" +
+        ".hologram-sphere {\\n  position: relative;\\n  top: 0;\\n  z-index: 1;\\n  width: " + sizePx + "px;\\n  height: " + sizePx + "px;\\n  border-radius: 50%;\\n  background-color: " + rgba(version.base.color, version.base.alpha) + ";\\n  background-image: " + buildBackground() + ";\\n  background-size: " + buildBackgroundSize() + ";\\n  background-position: " + buildPosition(0) + ";\\n  background-repeat: no-repeat;\\n  box-shadow: " + shadows.large.join(", ") + ";\\n  transform-origin: center;\\n  animation: bubble-motion " + controls.speed.value + "s ease-in-out infinite, orb-spin " + controls.rotation.value + "s linear infinite;\\n}\\n\\n" +
+        "@keyframes bubble-motion {\\n  0% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; top: 0; transform: scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n  45% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; top: -" + (floatAmount / 2).toFixed(2) + "px; transform: scale(1.003); border-radius: " + shapeB + "; filter: saturate(1.14) brightness(1.025); }\\n  56% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; top: -" + floatAmount.toFixed(2) + "px; transform: scale(1.008); border-radius: " + shapeB + "; filter: saturate(1.15) brightness(1.035); }\\n  64% { background-position: " + buildPosition(shift) + "; background-size: " + buildBackgroundSizeForTurn(shift, 1) + "; top: -" + (floatAmount / 2).toFixed(2) + "px; transform: scale(.997); border-radius: " + shapeB + "; filter: saturate(1.12) brightness(1.018); }\\n  72% { background-position: " + buildPosition(Math.round(shift * -0.7)) + "; background-size: " + buildBackgroundSizeForTurn(shift, -0.75) + "; top: -" + (floatAmount / 2).toFixed(2) + "px; transform: scale(0.998); border-radius: " + shapeC + "; filter: saturate(1.1) brightness(1.01); }\\n  100% { background-position: " + buildPosition(0) + "; background-size: " + buildBackgroundSize() + "; top: 0; transform: scale(1); border-radius: " + shapeA + "; filter: saturate(1.08) brightness(1); }\\n}\\n\\n" +
+        "@keyframes orb-bounce {\\n  0%, 18%, 100% { margin-top: 0; }\\n  46% { margin-top: calc(-1 * var(--bounce)); }\\n  62% { margin-top: var(--bounce-settle); }\\n  74% { margin-top: 0; }\\n}\\n\\n" +
+        "@keyframes orb-ripple {\\n  0%, 14% { transform: scale(.86); opacity: 0; }\\n  28% { opacity: " + rippleAlpha.toFixed(2) + "; }\\n  62% { opacity: " + (rippleAlpha * 0.58).toFixed(2) + "; }\\n  100% { transform: scale(" + rippleScale.toFixed(2) + "); opacity: 0; }\\n}\\n\\n" +
         "@keyframes orb-spin {\\n  from { rotate: 0deg; }\\n  to { rotate: 360deg; }\\n}\\n\\n" +
         "@keyframes glow-drift {\\n  0% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(0deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n  50% { transform: translate(calc(-50% + " + controls.glowMove.value + "px), calc(-50% - " + (Number(controls.glowMove.value) / 3) + "px)) rotate(180deg); opacity: " + Math.max(0.28, 0.86 - Number(controls.glowPulse.value)).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.45) hue-rotate(" + Math.round(10 + Number(controls.glowPulse.value) * 80) + "deg); }\\n  100% { transform: translate(calc(-50% - " + (Number(controls.glowMove.value) / 2) + "px), -50%) rotate(360deg); opacity: " + Math.min(1, 0.78 + version.glow.alpha).toFixed(2) + "; filter: blur(" + version.glow.blur + "px) saturate(1.2) hue-rotate(0deg); }\\n}\\n";
     }
     Object.values(controls).forEach(input => input.addEventListener("input", apply));
     [colorSpeed, colorOpacity].forEach(input => input.addEventListener("input", applyColorTransition));
+    copyGeneratedCodeBtn.addEventListener("click", async () => {
+      const text = code.value;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (error) {
+        code.focus();
+        code.select();
+        document.execCommand("copy");
+      }
+      const original = copyGeneratedCodeBtn.textContent;
+      copyGeneratedCodeBtn.textContent = ${JSON.stringify(currentLang === "ru" ? "Скопировано" : "Copied")};
+      setTimeout(() => { copyGeneratedCodeBtn.textContent = original; }, 1100);
+    });
+    exportGeneratedCodeBtn.addEventListener("click", () => {
+      downloadText(activeTab === "color" ? "orb-color-animation.css" : "orb-animation.css", code.value);
+    });
     document.getElementById("exportAnimationSettingsBtn").addEventListener("click", () => exportSettings("animation"));
     document.getElementById("loadAnimationSettingsBtn").addEventListener("click", () => openSettingsFile("animation"));
     document.getElementById("exportColorSettingsBtn").addEventListener("click", () => exportSettings("color"));
