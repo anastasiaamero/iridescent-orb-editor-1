@@ -814,6 +814,17 @@
       transform: scale(0.985);
     }
 
+    button,
+    .action-btn,
+    .mobile-tab-btn,
+    .mobile-delete-point,
+    .composition-add,
+    .composition-copy,
+    .composition-code-toggle,
+    .composition-remove-layer {
+      font-weight: 600 !important;
+    }
+
     .action-btn:not(.primary):hover {
       background-color: #e9e9ec;
       filter: none;
@@ -1488,6 +1499,7 @@
       .footer .mobile-export-btn {
         display: block;
       }
+
     }
 
     @media (max-width: 560px) and (hover: none) {
@@ -1816,6 +1828,8 @@
 
       .composition-preview .orb-composition {
         width: min(72%, 260px);
+        transform: scale(0.56);
+        transform-origin: center;
       }
 
       .composition-controls {
@@ -3215,6 +3229,13 @@ ${layerCss}
     button:active {
       transform: scale(0.985);
     }
+    button,
+    .scene-btn,
+    .tab-btn,
+    .close-btn,
+    .color-reset-btn {
+      font-weight: 600 !important;
+    }
     .scene-btn:not(.primary):hover,
     .tab-btn:not(.active):hover,
     .close-btn:hover,
@@ -3312,7 +3333,7 @@ ${layerCss}
     }
     .code-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 8px;
     }
     .sphere-wrap {
@@ -3832,7 +3853,6 @@ ${layerCss}
       <textarea id="code" spellcheck="false"></textarea>
       <div class="code-actions">
         <button class="scene-btn primary" id="copyGeneratedCodeBtn" type="button">${t("copyCss")}</button>
-        <button class="scene-btn" id="exportGeneratedCodeBtn" type="button">${t("exportSettings")}</button>
       </div>
     </section>
   </main>
@@ -3931,7 +3951,6 @@ ${layerCss}
     const code = document.getElementById("code");
     const codeLabel = document.getElementById("codeLabel");
     const copyGeneratedCodeBtn = document.getElementById("copyGeneratedCodeBtn");
-    const exportGeneratedCodeBtn = document.getElementById("exportGeneratedCodeBtn");
     const animationTab = document.getElementById("animationTab");
     const colorTab = document.getElementById("colorTab");
     const sceneTab = document.getElementById("sceneTab");
@@ -4672,9 +4691,6 @@ ${layerCss}
       const original = copyGeneratedCodeBtn.textContent;
       copyGeneratedCodeBtn.textContent = ${JSON.stringify(currentLang === "ru" ? "Скопировано" : "Copied")};
       setTimeout(() => { copyGeneratedCodeBtn.textContent = original; }, 1100);
-    });
-    exportGeneratedCodeBtn.addEventListener("click", () => {
-      downloadText(activeTab === "color" ? "orb-color-animation.css" : "orb-animation.css", code.value);
     });
     document.getElementById("exportAnimationSettingsBtn").addEventListener("click", () => exportSettings("animation"));
     document.getElementById("loadAnimationSettingsBtn").addEventListener("click", () => openSettingsFile("animation"));
